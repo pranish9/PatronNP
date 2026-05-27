@@ -10,7 +10,6 @@ import SearchResults from './pages/SearchResults';
 
 const App = () => {
   return (
-    <Router>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -21,7 +20,7 @@ const App = () => {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/results/:query" element={<SearchResults />} />
       </Routes>
-    </Router>
+
   );
 };
 

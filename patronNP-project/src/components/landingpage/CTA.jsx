@@ -1,43 +1,48 @@
 import React from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-export default function CTA() {
+const CTA = ({ onSearchOpen }) => {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900 text-white">
-      <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Make a Difference?</h2>
-        <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-          Join thousands of creators and supporters today. Whether you're a creator looking to earn or a supporter wanting to help, PatronNP is the place to be.
-        </p>
+    <section className="py-24 px-4 bg-white">
+      <div className="max-w-5xl mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-8 md:p-20 text-center shadow-2xl relative overflow-hidden">
         
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <button className="px-8 py-4 bg-white text-gray-900 rounded-lg font-semibold hover:bg-gray-100 transition flex items-center justify-center gap-2">
-            Start as Creator <ArrowRight className="w-5 h-5" />
-          </button>
-          <button className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-gray-900 transition">
-            Start as Supporter
-          </button>
+        {/* Background Depth Effect */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-white rounded-full blur-3xl"></div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 border-t border-gray-700">
-          <div>
-            <p className="text-2xl font-bold">0%</p>
-            <p className="text-gray-400 text-sm">Platform Fees</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">&lt;2hr</p>
-            <p className="text-gray-400 text-sm">Instant Payouts</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">100%</p>
-            <p className="text-gray-400 text-sm">Secure</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">24/7</p>
-            <p className="text-gray-400 text-sm">Support</p>
+        <div className="relative z-10">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+            Start earning from your <br className="hidden md:block" /> audience today.
+          </h2>
+          
+          <p className="text-emerald-50 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-medium">
+            Join hundreds of Nepali creators turning their passion into real income with a platform built for your growth.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link 
+              to="/signup" 
+              className="group flex items-center gap-2 w-full sm:w-auto px-8 py-4 bg-orange-500 text-white font-bold rounded-full hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-400/30"
+            >
+              Become a Creator
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+            
+            {/* Clickable button to trigger the search */}
+            <button 
+              onClick={onSearchOpen}
+              className="flex items-center gap-2 w-full sm:w-auto px-8 py-4 bg-emerald-700/30 text-white font-bold rounded-full hover:bg-emerald-700/50 transition-all backdrop-blur-sm border border-emerald-400/20"
+            >
+              <Search size={18} />
+              Explore Creators
+            </button>
           </div>
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default CTA;

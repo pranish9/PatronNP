@@ -1,47 +1,65 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
 import SearchModal from '../components/search/SearchModal';
 import Navbar from '../components/landingpage/Navbar';
 import Hero from '../components/landingpage/Hero';
 import Features from '../components/landingpage/Features';
 import HowItWorks from '../components/landingpage/HowItWorks';
+import CreatorTypes from '../components/landingpage/CreatorTypes';
 import Testimonials from '../components/landingpage/Testimonials';
 import CTA from '../components/landingpage/CTA';
+import EarningsSection from '../components/landingpage/EarningsSection';
 import Footer from '../components/landingpage/Footer';
+import FAQ from '../components/landingpage/FQA';
 
 const Home = () => {
+  // 1. Initialized to false so it does not load on page start
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // 2. Use callbacks for clean prop passing
+  const openSearch = useCallback(() => setIsSearchOpen(true), []);
+  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+      {/* Navbar now properly triggers the modal open */}
+      <Navbar onSearchOpen={openSearch} />
       
-      {/* Hero with Search Bar */}
-      <div className="relative">
-        <Hero />
-        
-        {/* Search Bar */}
-        <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 z-10">
-          <div className="relative">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="w-full px-6 py-3 bg-white border-2 border-gray-300 rounded-full flex items-center gap-3 hover:border-blue-500 transition-colors shadow-md"
-            >
-              <Search size={20} className="text-gray-400" />
-              <span className="text-gray-500">Search for services, people...</span>
-            </button>
-          </div>
+      <main>
+        <div id="hero">
+          <Hero onSearchOpen={openSearch} />
         </div>
-      </div>
 
-      {/* Search Modal */}
-      {isSearchOpen && <SearchModal onClose={() => setIsSearchOpen(false)} />}
+        <div id="features">
+          <Features />
+        </div>
+        
+        <div id="how-it-works">
+          <HowItWorks />
+        </div>
+        <div id="creator-types">  
+          <CreatorTypes />
+        </div>
+        <div id="earning-sections">
+          <EarningsSection />
+        </div>
+        <div id="testimonials">
+          <Testimonials />
+        </div>
+        <FAQ />
+        <div id="cta">
+          <CTA />
+        </div>
+      </main>
 
-      <Features />
-      <HowItWorks />
-      <Testimonials />
-      <CTA />
       <Footer />
+
+      {/* 3. Modal logic: Render only when isSearchOpen is true */}
+      {isSearchOpen && (
+        <SearchModal 
+          isOpen={isSearchOpen} 
+          onClose={closeSearch} 
+        />
+      )}
     </div>
   );
 };

@@ -1,60 +1,61 @@
 import React from 'react';
-import { Heart } from 'lucide-react';
+// Import your logo from your assets folder
+import logo from '/android-chrome-192x192.png'; 
 
-export default function Footer() {
+const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-              <span className="font-bold text-white text-lg">PatronNP</span>
-            </div>
-            <p className="text-sm">Supporting creators, one tip at a time.</p>
+    <footer className="py-12 bg-white border-t border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+        
+        {/* Logo Section */}
+        {/* Logo Section */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <img 
+              src={logo} 
+              alt="PatronNP Logo" 
+              className="h-8 w-8 object-contain" 
+            />
+            <span className="font-bold text-xl text-emerald-600">PatronNP</span>
           </div>
-          
-          <div>
-            <h4 className="font-semibold text-white mb-4">Product</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition">Features</a></li>
-              <li><a href="#" className="hover:text-white transition">Pricing</a></li>
-              <li><a href="#" className="hover:text-white transition">Security</a></li>
-              <li><a href="#" className="hover:text-white transition">Roadmap</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold text-white mb-4">Resources</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition">Blog</a></li>
-              <li><a href="#" className="hover:text-white transition">Help Center</a></li>
-              <li><a href="#" className="hover:text-white transition">Community</a></li>
-              <li><a href="#" className="hover:text-white transition">API Docs</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold text-white mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-white transition">Privacy</a></li>
-              <li><a href="#" className="hover:text-white transition">Terms</a></li>
-              <li><a href="#" className="hover:text-white transition">Contact</a></li>
-              <li><a href="#" className="hover:text-white transition">Status</a></li>
-            </ul>
-          </div>
+          <p className="text-gray-500 text-sm">
+            The all-in-one platform for Nepali creators to earn online.
+          </p>
         </div>
         
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm">© 2024 PatronNP. All rights reserved.</p>
-          <div className="flex gap-6 mt-4 md:mt-0 text-sm">
-            <a href="#" className="hover:text-white transition">Twitter</a>
-            <a href="#" className="hover:text-white transition">Instagram</a>
-            <a href="#" className="hover:text-white transition">Facebook</a>
-            <a href="#" className="hover:text-white transition">LinkedIn</a>
-          </div>
+        {/* Links Sections */}
+        <div>
+          <h4 className="font-bold text-gray-900 mb-4">Product</h4>
+          <ul className="space-y-2 text-gray-600 text-sm cursor-pointer">
+            <li className="hover:text-emerald-600 transition-colors">Features</li>
+            <li className="hover:text-emerald-600 transition-colors">Pricing</li>
+            <li className="hover:text-emerald-600 transition-colors">How it works</li>
+          </ul>
         </div>
+        
+        <div>
+          <h4 className="font-bold text-gray-900 mb-4">Company</h4>
+          <ul className="space-y-2 text-gray-600 text-sm cursor-pointer">
+            <li className="hover:text-emerald-600 transition-colors">About</li>
+            <li className="hover:text-emerald-600 transition-colors">Contact</li>
+            <li className="hover:text-emerald-600 transition-colors">Blog</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 className="font-bold text-gray-900 mb-4">Legal</h4>
+          <ul className="space-y-2 text-gray-600 text-sm cursor-pointer">
+            <li className="hover:text-emerald-600 transition-colors">Terms</li>
+            <li className="hover:text-emerald-600 transition-colors">Privacy</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-gray-100 text-center text-gray-400 text-sm">
+        &copy; 2026 PatronNP. Made with ♥ in Kathmandu.
       </div>
     </footer>
   );
-}
+};
+
+export default Footer;

@@ -1,60 +1,77 @@
 import React, { useState } from 'react';
 import { Search, Menu, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const Navbar = () => {
+const Navbar = ({ onSearchOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const navLinks = [
+    { name: 'Features', path: '#features' },
+    { name: 'How it Works', path: '#how-it-works' },
+    { name: 'Earning Potential', path: '#earning-sections'},
+    { name: 'Testimonials', path: '#testimonials' },
+  ];
 
   return (
     <nav className="fixed w-full top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
         
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Logo" className="w-8 h-8" />
-          <span className="text-xl font-bold text-gray-900">PatronNP</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+          <img src="/android-chrome-192x192.png" alt="Logo" className="w-8 h-8" />
+          <span className="text-xl font-bold text-gray-900 hidden sm:block">PatronNP</span>
+        </Link>
 
-        {/* Desktop Search Bar (Hidden on mobile) */}
-        <div className="hidden md:flex flex-1 max-w-md mx-8 relative">
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full text-sm"
-            placeholder="Search creator..."
-          />
-        </div>
+        {/* Desktop Search Trigger - Improved for Tablet/Desktop */}
+        {/* 'flex-grow' allows it to take available space, 'max-w-md' keeps it from getting too huge */}
+        <button 
+          onClick={onSearchOpen}
+          className="flex-grow max-w-sm mx-4 flex items-center gap-3 px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-500 hover:border-orange-300 hover:bg-white hover:text-orange-600 transition-all shadow-sm"
+        >
+          <Search size={16} /> 
+          <span className="truncate">Search creators...</span>
+        </button>
 
-        {/* Desktop Links */}
-        <div className="hidden md:flex items-center gap-6 text-gray-600 text-sm font-medium">
-          {['How it Works', 'Creators', 'Pricing', 'FAQ', 'Features'].map((item) => (
-            <a key={item} href="#" className="hover:text-gray-900">{item}</a>
+        {/* Desktop Navigation Links - Hidden on small tablets to prevent overflow */}
+        <div className="hidden lg:flex items-center gap-6 text-gray-600 text-sm font-medium flex-shrink-0">
+          {navLinks.map((item) => (
+            <a key={item.name} href={item.path} className="hover:text-gray-900 transition-colors">
+              {item.name}
+            </a>
           ))}
         </div>
 
-        {/* Desktop Auth Buttons */}
-        <div className="hidden md:flex items-center gap-4 ml-6">
-          <button className="text-sm font-medium">Login</button>
-          <button className="px-5 py-2 bg-orange-500 text-white rounded-full text-sm font-medium hover:bg-orange-600">
-            Sign Up
-          </button>
+        {/* Auth Buttons - Hidden on small tablets */}
+        <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+          <Link to="/signin" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3">Login</Link>
+          <Link to="/signup" className="px-5 py-2 bg-orange-500 text-white rounded-full text-sm font-medium hover:bg-orange-600 transition-all shadow-md hover:shadow-orange-200">Sign Up</Link>
         </div>
 
-        {/* Mobile Menu Button */}
-        <button className="md:hidden p-2" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X /> : <Menu />}
+        {/* Mobile/Tablet Menu Toggle */}
+        <button className="md:hidden p-2 text-gray-600" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Menu (Visible only when isOpen is true) */}
+      {/* Mobile/Tablet Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t p-4 flex flex-col gap-4">
-          <input type="text" className="w-full p-2 border rounded-full" placeholder="Search..." />
-          {['How it Works', 'Creators', 'Pricing', 'FAQ', 'Features'].map((item) => (
-            <a key={item} href="#" className="text-gray-600">{item}</a>
+        <div className="md:hidden bg-white border-t p-4 flex flex-col gap-4 shadow-xl absolute w-full">
+          <button 
+            onClick={() => { onSearchOpen(); setIsOpen(false); }}
+            className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-full text-gray-500 bg-gray-50"
+          >
+            <Search size={18} /> Search creators...
+          </button>
+
+          {navLinks.map((item) => (
+            <a key={item.name} href={item.path} className="text-gray-600 py-2 font-medium" onClick={() => setIsOpen(false)}>
+              {item.name}
+            </a>
           ))}
+          
           <hr />
-          <button className="text-left font-medium">Login</button>
-          <button className="bg-orange-500 text-white py-2 rounded-full font-medium">Sign Up</button>
+          <Link to="/signin" className="text-center font-medium text-gray-600 py-2" onClick={() => setIsOpen(false)}>Login</Link>
+          <Link to="/signup" className="bg-orange-500 text-white py-3 rounded-full font-medium text-center" onClick={() => setIsOpen(false)}>Sign Up</Link>
         </div>
       )}
     </nav>
