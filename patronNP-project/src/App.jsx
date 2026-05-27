@@ -1,11 +1,13 @@
 import React from 'react';
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import Features from './components/Features';
-import HowItWorks from './components/HowItWorks';
-import Testimonials from './components/Testimonials';
-import CTA from './components/CTA';
-import Footer from './components/Footer';
+import { Heart, Users, TrendingUp, Zap, CheckCircle, ArrowRight, Star } from 'lucide-react';
+import Navbar from './components/landingpage/Navbar';
+import { HeartOff } from 'lucide-react';  
+import Hero from './components/landingpage/Hero';
+import Features from './components/landingpage/Features';
+import HowItWorks from './components/landingpage/HowItWorks';
+import Testimonials from './components/landingpage/Testimonials';
+import CTA from './components/landingpage/CTA';
+import Footer from './components/landingpage/Footer'; 
 
 const App = () => {
   return (
