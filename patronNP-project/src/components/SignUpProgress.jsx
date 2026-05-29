@@ -1,7 +1,7 @@
 import React from 'react';
 
-const SignUpProgress = ({ currentStep, totalSteps = 4 }) => {
-  const steps = ['Authenticate', 'Profile', 'Payment', 'Complete'];
+const SignUpProgress = ({ currentStep, totalSteps = 5 }) => {
+  const steps = ['Identity', 'Authenticate', 'Profile', 'Payment', 'Complete'];
 
   return (
     <div className="mb-8">
