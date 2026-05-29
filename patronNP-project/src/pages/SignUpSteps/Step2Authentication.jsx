@@ -1,259 +1,333 @@
-import React, { useState } from 'react';
-import { Mail, Eye, EyeOff, CheckCircle, AlertCircle, Loader } from 'lucide-react';
-import GoogleSignIn from '../../components/auth/GoogleSignIn';
+import React, { useState } from "react";
+import {
+  Mail,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+} from "lucide-react";
 
-const Step2Authentication = ({ onNext, onPrev, formData, setFormData }) => {
-  const [authMethod, setAuthMethod] = useState(formData.authMethod || null);
-  const [email, setEmail] = useState(formData.email || '');
-  const [password, setPassword] = useState(formData.password || '');
-  const [confirmPassword, setConfirmPassword] = useState(formData.confirmPassword || '');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [validating, setValidating] = useState(false);
+import GoogleSignIn from "../../components/auth/GoogleSignIn";
 
-  const passwordStrength = (pwd) => {
-    if (!pwd) return { score: 0, label: 'No password', color: 'gray' };
-    let score = 0;
-    if (pwd.length >= 8) score++;
-    if (pwd.length >= 12) score++;
-    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) score++;
-    if (/\d/.test(pwd)) score++;
-    if (/[!@#$%^&*]/.test(pwd)) score++;
+const Step2Authentication = ({
+  onNext,
+  onPrev,
+  formData,
+  setFormData,
+}) => {
+  const [email, setEmail] = useState(
+    formData.email || ""
+  );
 
-    const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
-    const colors = ['red', 'orange', 'yellow', 'blue', 'emerald', 'emerald'];
-    
-    return {
-      score: Math.min(score, 5),
-      label: labels[Math.min(score, 5)],
-      color: colors[Math.min(score, 5)]
-    };
+  const [otp, setOtp] = useState("");
+  const [generatedOtp, setGeneratedOtp] =
+    useState("");
+
+  const [otpSent, setOtpSent] = useState(false);
+  const [verified, setVerified] = useState(false);
+
+  const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] =
+    useState(false);
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // Validate email
+  const validateEmail = (value) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      value
+    );
   };
 
-  const strength = passwordStrength(password);
-
-  const handleGoogleSuccess = (credentialResponse) => {
-    setFormData({
-      authMethod: 'google',
-      googleData: credentialResponse,
-      email: credentialResponse.email || '',
-      socialData: credentialResponse
-    });
-    onNext();
-  };
-
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const handleEmailSubmit = (e) => {
+  // Send OTP
+  const handleSendOtp = (e) => {
     e.preventDefault();
-    setError('');
+
+    setError("");
+    setSuccess("");
 
     if (!email.trim()) {
-      setError('Email address is required');
+      setError("Email is required");
       return;
     }
 
     if (!validateEmail(email)) {
-      setError('Please enter a valid email address');
+      setError("Enter a valid email address");
       return;
     }
 
-    if (!password) {
-      setError('Password is required');
-      return;
-    }
+    setLoading(true);
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
+    // Generate 6 digit OTP
+    const otpCode = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
-    if (strength.score < 2) {
-      setError('Password is too weak. Use uppercase, lowercase, numbers, and symbols');
-      return;
-    }
+    // Save OTP
+    setGeneratedOtp(otpCode);
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    // Print OTP in console
+    console.log("Generated OTP:", otpCode);
 
-    setValidating(true);
-    
-    // Simulate email verification API call
+    // Fake API delay
     setTimeout(() => {
-      setFormData({
-        authMethod: 'email',
-        email,
-        password,
-        confirmPassword
-      });
-      setValidating(false);
-      onNext();
+      setOtpSent(true);
+      setLoading(false);
+
+      setSuccess(
+        "OTP has been sent to your email"
+      );
     }, 1500);
+  };
+
+  // Verify OTP
+  const handleVerifyOtp = () => {
+    setError("");
+    setSuccess("");
+
+    if (!otp) {
+      setError("Please enter OTP");
+      return;
+    }
+
+    if (otp.length !== 6) {
+      setError("OTP must be 6 digits");
+      return;
+    }
+
+    setVerifying(true);
+
+    setTimeout(() => {
+      if (otp === generatedOtp) {
+        setVerified(true);
+
+        setFormData({
+          ...formData,
+          authMethod: "email",
+          email,
+          verified: true,
+        });
+
+        setSuccess(
+          "Email verified successfully!"
+        );
+
+        setTimeout(() => {
+          onNext();
+        }, 1000);
+      } else {
+        setError("Invalid OTP");
+      }
+
+      setVerifying(false);
+    }, 1200);
+  };
+
+  // Google Success
+  const handleGoogleSuccess = (
+    credentialResponse
+  ) => {
+    setFormData({
+      ...formData,
+      authMethod: "google",
+      email: credentialResponse.email || "",
+      googleData: credentialResponse,
+      verified: true,
+    });
+
+    onNext();
   };
 
   return (
     <div className="max-w-md mx-auto">
+      {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Your Account</h1>
-        <p className="text-gray-600">Sign up with email or social account</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Verify Your Email
+        </h1>
+
+        <p className="text-gray-600">
+          Continue using email OTP or Google
+        </p>
       </div>
 
-      <form onSubmit={handleEmailSubmit} className="space-y-5">
+      <form
+        onSubmit={handleSendOtp}
+        className="space-y-5"
+      >
+        {/* Error */}
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">{error}</p>
+            <AlertCircle
+              size={16}
+              className="text-red-600 mt-0.5 flex-shrink-0"
+            />
+
+            <p className="text-sm text-red-700">
+              {error}
+            </p>
           </div>
         )}
 
-        {/* Email Input */}
+        {/* Success */}
+        {success && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-2">
+            <CheckCircle
+              size={16}
+              className="text-emerald-600 mt-0.5 flex-shrink-0"
+            />
+
+            <p className="text-sm text-emerald-700">
+              {success}
+            </p>
+          </div>
+        )}
+
+        {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Email Address
+          </label>
+
           <div className="relative">
-            <Mail size={18} className="absolute left-3 top-3 text-gray-400" />
+            <Mail
+              size={18}
+              className="absolute left-3 top-3 text-gray-400"
+            />
+
             <input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
               placeholder="you@example.com"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              disabled={validating}
+              disabled={otpSent}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all disabled:bg-gray-100"
             />
           </div>
-          {email && validateEmail(email) && (
-            <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
-              <CheckCircle size={14} /> Valid email format
-            </p>
-          )}
-        </div>
 
-        {/* Password Input */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              disabled={validating}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-              tabIndex={-1}
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-
-          {/* Password Strength Indicator */}
-          {password && (
-            <div className="mt-2 space-y-2">
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full bg-${strength.color}-500 transition-all`}
-                    style={{
-                      width: `${(strength.score / 5) * 100}%`,
-                      backgroundColor: {
-                        red: '#ef4444',
-                        orange: '#f97316',
-                        yellow: '#eab308',
-                        blue: '#3b82f6',
-                        emerald: '#10b981'
-                      }[strength.color]
-                    }}
-                  />
-                </div>
-                <span className={`text-xs font-medium text-${strength.color}-600`}>
-                  {strength.label}
-                </span>
-              </div>
-              <p className="text-xs text-gray-600">
-                Include uppercase, lowercase, numbers, and symbols for better security
+          {email &&
+            validateEmail(email) && (
+              <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                <CheckCircle size={14} />
+                Valid email format
               </p>
-            </div>
-          )}
+            )}
         </div>
 
-        {/* Confirm Password */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-          <div className="relative">
-            <input
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-              disabled={validating}
-            />
+        {/* Send OTP Button */}
+        {!otpSent && (
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader
+                  size={18}
+                  className="animate-spin"
+                />
+                Sending OTP...
+              </>
+            ) : (
+              "Send OTP"
+            )}
+          </button>
+        )}
+
+        {/* OTP Section */}
+        {otpSent && !verified && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Enter OTP
+              </label>
+
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) =>
+                  setOtp(
+                    e.target.value.replace(/\D/g, "")
+                  )
+                }
+                maxLength={6}
+                placeholder="123456"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-center text-lg tracking-[0.4em] font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+            </div>
+
             <button
               type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-              tabIndex={-1}
+              onClick={handleVerifyOtp}
+              disabled={verifying}
+              className="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
             >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              {verifying ? (
+                <>
+                  <Loader
+                    size={18}
+                    className="animate-spin"
+                  />
+                  Verifying...
+                </>
+              ) : (
+                "Verify OTP"
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setOtpSent(false);
+                setOtp("");
+                setGeneratedOtp("");
+                setSuccess("");
+                setError("");
+              }}
+              className="w-full text-sm text-gray-600 hover:text-gray-800"
+            >
+              Change Email
             </button>
           </div>
-          {password && confirmPassword && password === confirmPassword && (
-            <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
-              <CheckCircle size={14} /> Passwords match
-            </p>
-          )}
-        </div>
-
-        {/* Email Submit Button */}
-        <button
-          type="submit"
-          disabled={validating}
-          className="w-full py-3 bg-emerald-500 text-white font-semibold rounded-lg hover:bg-emerald-600 transition-colors disabled:bg-gray-400 flex items-center justify-center gap-2"
-        >
-          {validating ? (
-            <>
-              <Loader size={18} className="animate-spin" />
-              Verifying...
-            </>
-          ) : (
-            'Continue with Email'
-          )}
-        </button>
+        )}
 
         {/* Divider */}
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
           </div>
+
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">Or sign up with</span>
+            <span className="px-2 bg-white text-gray-500">
+              Or continue with
+            </span>
           </div>
         </div>
 
-        {/* Social Auth */}
-        <div className="space-y-3">
-          <GoogleSignIn onSuccess={handleGoogleSuccess} />
-        </div>
+        {/* Google Sign In */}
+        <GoogleSignIn
+          onSuccess={handleGoogleSuccess}
+        />
       </form>
 
-      {/* Security Info */}
+      {/* Security Box */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-xs text-blue-900">
-          <span className="font-semibold">🔒 Your data is secure</span>
+          <span className="font-semibold">
+            🔒 Secure Authentication
+          </span>
+
           <br />
-          We never share your email. Passwords are encrypted with industry-standard protocols.
+
+          Email OTP and Google login are used
+          for secure account verification.
         </p>
       </div>
 
-      {/* Navigation */}
+      {/* Back Button */}
       <button
         type="button"
         onClick={onPrev}
