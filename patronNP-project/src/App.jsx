@@ -1,27 +1,66 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
-import ForgotPassword from './pages/ForgotPassword';
-import OTPVerification from './pages/OTPVerification';
-import ResetPassword from './pages/ResetPassword';
-import SearchResults from './pages/SearchResults';
+import React, { useEffect } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import useThemeStore from './stores/themeStore'
+
+// Pages
+import Home from './pages/Home'
+import SignIn from './pages/SignIn'
+import SignUp from './pages/SignUp'
+import Onboarding from './pages/Onboarding'
+import Dashboard from './pages/Dashboard'
+import CreatorProfile from './pages/CreatorProfile'
+import Explore from './pages/Explore'
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const isAuthenticated = localStorage.getItem('accessToken')
+  return isAuthenticated ? children : <Navigate to="/signin" replace />
+}
 
 const App = () => {
+  const { isDark } = useThemeStore()
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [isDark])
+
   return (
+    <Router>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-otp" element={<OTPVerification />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/results/:query" element={<SearchResults />} />
+        <Route path="/explore" element={<Explore />} />
+        <Route path="/@:username" element={<CreatorProfile />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+    </Router>
+  )
+}
 
-  );
-};
-
-export default App;
+export default App
