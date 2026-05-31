@@ -6,7 +6,7 @@ import useThemeStore from './stores/themeStore'
 import Home from './pages/Home'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
-import Onboarding from './pages/Onboarding'
+import OnboardingFlow from './pages/OnboardingFlow'
 import Dashboard from './pages/Dashboard'
 import CreatorProfile from './pages/CreatorProfile'
 import Explore from './pages/Explore'
@@ -35,14 +35,17 @@ const App = () => {
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/explore" element={<Explore />} />
+      
+      {/* Creator Profile - supports both /@username and /username */}
       <Route path="/@:username" element={<CreatorProfile />} />
+      <Route path="/:username" element={<CreatorProfile />} />
 
       {/* Protected Routes */}
       <Route
         path="/onboarding"
         element={
           <ProtectedRoute>
-            <Onboarding />
+            <OnboardingFlow />
           </ProtectedRoute>
         }
       />
