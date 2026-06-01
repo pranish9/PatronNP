@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+   import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export const useThemeStore = create(
@@ -17,7 +17,7 @@ export const useThemeStore = create(
           return { isDark: newIsDark };
         }),
 
-      setTheme: (isDark) =>
+      setTheme: (isDark) =>+
         set(() => {
           if (isDark) {
             document.documentElement.classList.add('dark');

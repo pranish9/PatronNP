@@ -1,4 +1,4 @@
-import { ChevronDown, Menu, X, Moon, Sun } from 'lucide-react'
+import { Menu, X, Moon, Sun } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '../hooks/useLanguage'
@@ -7,9 +7,8 @@ import useThemeStore from '../stores/themeStore'
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
-  const [isLanguageOpen, setIsLanguageOpen] = useState(false)
   const navigate = useNavigate()
-  const { currentLanguage, changeLanguage, t } = useLanguage()
+  const { t } = useLanguage()
   const { isDark, toggleTheme } = useThemeStore()
   const { isAuthenticated, user, logout } = useAuthStore()
 
@@ -23,12 +22,6 @@ export const Navbar = () => {
     logout()
     navigate('/')
   }
-
-  const languages = [
-    { code: 'en', name: 'English' },
-    { code: 'ne', name: 'नेपाली' },
-    { code: 'hi', name: 'हिन्दी' },
-  ]
 
   return (
     <nav className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
@@ -56,37 +49,6 @@ export const Navbar = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-4">
-            {/* Language Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setIsLanguageOpen(!isLanguageOpen)}
-                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition text-sm font-medium"
-              >
-                {currentLanguage.toUpperCase()}
-                <ChevronDown size={16} />
-              </button>
-              {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1">
-                  {languages.map((lang) => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        changeLanguage(lang.code)
-                        setIsLanguageOpen(false)
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm transition ${
-                        currentLanguage === lang.code
-                          ? 'bg-purple-50 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
-                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {lang.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
