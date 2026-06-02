@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AuthLayout from '../components/auth/AuthLayout';
 import SignUpProgress from '../components/SignUpProgress';
 import SignUpPhase1 from './SignUpSteps/SignUpPhase1';
+import AuthMethodChoice from './SignUpSteps/AuthMethodChoice';
 import SignUpPhase2 from './SignUpSteps/SignUpPhase2';
 
 const OnboardingContainer = () => {
@@ -9,7 +10,7 @@ const OnboardingContainer = () => {
   const [formData, setFormData] = useState({
     // Signup Phase 1
     username: '',
-    // Signup Phase 2
+    // Signup Phase 2 - Auth Method
     authMethod: null,
     email: '',
     password: '',
@@ -67,6 +68,19 @@ const OnboardingContainer = () => {
         );
       case 2:
         return (
+          <AuthMethodChoice
+            onEmailChoice={() => {
+              handleFormDataUpdate({ authMethod: 'email' });
+              handleNextStep();
+            }}
+            onGoogleChoice={() => {
+              handleFormDataUpdate({ authMethod: 'google' });
+              handleNextStep();
+            }}
+          />
+        );
+      case 3:
+        return (
           <SignUpPhase2
             onNext={handleStepComplete}
             onPrev={handlePrevStep}
@@ -81,7 +95,7 @@ const OnboardingContainer = () => {
 
   return (
     <AuthLayout fullWidth={false}>
-      <SignUpProgress currentStep={currentStep} totalSteps={2} />
+      <SignUpProgress currentStep={currentStep} totalSteps={3} />
       <div className="animate-fade-in">
         {renderStep()}
       </div>
