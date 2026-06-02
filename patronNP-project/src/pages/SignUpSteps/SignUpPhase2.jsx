@@ -1,255 +1,200 @@
 import React, { useState } from "react";
-import { Mail, Eye, EyeOff, ArrowLeft, Loader } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import axios from "axios";
 
-const SignUpPhase2 = ({ onPrev, formData, setFormData }) => {
+const SignUpPhase2 = ({ onPrev, formData }) => {
   const navigate = useNavigate();
 
-  const [authMethod, setAuthMethod] = useState(formData.authMethod || null);
+  const [step, setStep] = useState("form");
+
   const [email, setEmail] = useState(formData.email || "");
-  const [password, setPassword] = useState(formData.password || "");
-  const [confirmPassword, setConfirmPassword] = useState(formData.confirmPassword || "");
+  const username = formData.username || "";
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [otp, setOtp] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  // 🔐 STRONG PASSWORD RULE
-  const isStrongPassword = (pass) => {
-    return (
-      pass.length >= 8 &&
-      /[A-Z]/.test(pass) &&
-      /[a-z]/.test(pass) &&
-      /[0-9]/.test(pass) &&
-      /[!@#$%^&*(),.?":{}|<>]/.test(pass)
-    );
+  // PASSWORD STRENGTH
+  const getStrength = (pass) => {
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[a-z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(pass)) score++;
+    return score;
   };
 
-  // GOOGLE SIGNUP
-  const handleGoogleSignUp = async () => {
-    setIsLoading(true);
-    try {
-      await new Promise((r) => setTimeout(r, 1500));
+  const strength = getStrength(password);
 
-      setFormData({ ...formData, authMethod: "google" });
-
-      localStorage.setItem("accessToken", "mock_" + Date.now());
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          username: formData.username,
-          email: "user@gmail.com",
-        })
-      );
-
-      toast.success("Welcome! Let's set up your profile");
-      navigate("/onboarding");
-    } catch {
-      toast.error("Google sign-up failed");
-    } finally {
-      setIsLoading(false);
-    }
+  const getStrengthColor = () => {
+    if (strength <= 2) return "bg-red-500";
+    if (strength === 3) return "bg-orange-500";
+    if (strength === 4) return "bg-yellow-500";
+    return "bg-green-500";
   };
+
+  const isStrongPassword = () => strength >= 4;
 
   // SEND OTP
-  const handleSendOTP = async () => {
+  const handleSendOtp = async () => {
     setError("");
 
     if (!email) return setError("Email is required");
-    if (!email.includes("@")) return setError("Invalid email");
-
     if (!password) return setError("Password is required");
-    if (!isStrongPassword(password)) {
-      return setError(
-        "Password must be 8+ chars with uppercase, lowercase, number & symbol"
-      );
+    if (!isStrongPassword()) {
+      return setError("Password is too weak");
     }
-
-    if (!confirmPassword) return setError("Confirm your password");
-    if (password !== confirmPassword) return setError("Passwords do not match");
-
-    setIsLoading(true);
-
-    try {
-      await new Promise((r) => setTimeout(r, 1000));
-
-      setOtpSent(true);
-      setFormData({ ...formData, authMethod: "email", email });
-
-      toast.success("OTP sent to " + email);
-    } catch {
-      setError("Failed to send OTP");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // VERIFY OTP
-  const handleVerifyOTP = async () => {
-    setError("");
-
-    if (!otp) return setError("OTP required");
-    if (otp.length !== 6) return setError("OTP must be 6 digits");
-
-    if (!isStrongPassword(password)) {
-      return setError("Weak password detected");
-    }
-
     if (password !== confirmPassword) {
       return setError("Passwords do not match");
     }
 
-    setIsLoading(true);
-
     try {
-      await new Promise((r) => setTimeout(r, 1500));
+      setLoading(true);
 
-      setFormData({
-        ...formData,
+      await axios.post("http://localhost:8080/auth/send-otp", {
         email,
-        password,
       });
 
-      localStorage.setItem("accessToken", "mock_" + Date.now());
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          username: formData.username,
-          email,
-        })
-      );
+      toast.success("OTP sent successfully");
+      setStep("otp");
 
-      toast.success("Welcome! Let's set up your profile");
-      navigate("/onboarding");
-    } catch {
-      setError("OTP verification failed");
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+        const status = err.response?.status;
+        const msg = err.response?.data;
+
+        if (status === 409) {
+          setError("This email is already registered");
+          toast.error("This email is already registered");
+        } else {
+          setError(msg || "Failed to send OTP");
+          toast.error(msg || "Failed to send OTP");
+        }
+      } finally {
+      setLoading(false);
     }
   };
+
+  // VERIFY OTP + REGISTER
+const handleVerifyOtp = async () => {
+  setError("");
+
+  if (otp.length !== 6) {
+    return setError("Enter valid 6 digit OTP");
+  }
+
+  try {
+    setLoading(true);
+
+    const res = await axios.post(
+      "http://localhost:8080/auth/verify-otp-register",
+      {
+        username,
+        email,
+        password,
+        otp,
+      }
+    );
+
+    localStorage.setItem("token", res.data.token);
+
+    toast.success("Account created successfully");
+    navigate("/onboarding");
+
+  } catch (err) {
+    const msg =
+      err.response?.data ||
+      err.response?.data?.message ||
+      "Something went wrong";
+
+    // 👇 IMPORTANT: show backend message properly
+    setError(msg);
+
+    toast.error(msg);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="max-w-md mx-auto">
 
       {/* HEADER */}
       <div className="flex items-center mb-8">
-        
-        <button
-          onClick={() => {
-            if (otpSent) {
-              setOtpSent(false);
-              return;
-            }
-
-            if (authMethod) {
-              setAuthMethod(null);
-              return;
-            }
-
-            onPrev(); // go back to Phase 1
-          }}
-          className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition"
-        >
-          <ArrowLeft size={20} className="text-gray-600" />
-          
+        <button onClick={onPrev} className="mr-4 p-2">
+          <ArrowLeft size={20} />
         </button>
 
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Verify Your Email
-          </h1>
-          <p className="text-gray-600 text-sm mt-1">
-            Choose how you'd like to verify
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold">Email Verification</h1>
       </div>
 
-      {/* AUTH CHOICE */}
-      {!authMethod ? (
-        <div className="space-y-4">
-
-          {/* GOOGLE */}
-         <button
-  onClick={handleGoogleSignUp}
-  disabled={isLoading}
-  className="w-full py-3 px-4 border-2 border-gray-300 rounded-lg hover:border-orange-500 transition flex items-center justify-center gap-3 disabled:opacity-50"
->
-  {isLoading ? (
-    <Loader className="animate-spin text-orange-500" size={20} />
-  ) : (
-    <>
-      {/* Google Logo */}
-      <svg className="w-5 h-5" viewBox="0 0 24 24">
-        <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.5 3.8-5.5 3.8-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.2.8 4 1.5l2.7-2.6C17.5 2.9 15 2 12 2 6.9 2 2.7 6.2 2.7 11.3S6.9 20.6 12 20.6c6.1 0 10.2-4.3 10.2-10.4 0-.7-.1-1.2-.2-1.7H12z"/>
-      </svg>
-
-      <span className="text-gray-700 font-medium">
-        Continue with Google
-      </span>
-    </>
-  )}
-</button>
-
-          {/* EMAIL */}
-          <button
-            onClick={() => setAuthMethod("email")}
-            className="w-full py-3 px-4 border-2 border-gray-300 rounded-lg hover:border-green-500 transition"
-          >
-            <Mail className="inline mr-2 text-gray-600" size={20} />
-            Email Sign Up
-          </button>
-        </div>
-      ) : authMethod === "email" && !otpSent ? (
+      {/* FORM STEP */}
+      {step === "form" && (
         <div className="space-y-4">
 
           {/* EMAIL */}
           <input
             type="email"
+            placeholder="Email"
+            className="w-full border p-3 rounded"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
-            placeholder="Email"
           />
 
           {/* PASSWORD */}
           <div className="relative">
             <input
-              required
               type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="w-full border p-3 rounded pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="Password"
             />
+
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-500"
+              className="absolute right-3 top-3"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
-          {/* CONFIRM */}
+          {/* PASSWORD STRENGTH BAR */}
+          {password && (
+            <div className="w-full bg-gray-200 h-2 rounded">
+              <div
+                className={`h-2 rounded ${getStrengthColor()}`}
+                style={{ width: `${(strength / 5) * 100}%` }}
+              />
+            </div>
+          )}
+
+          {/* CONFIRM PASSWORD */}
           <div className="relative">
             <input
-              required
               type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm Password"
+              className="w-full border p-3 rounded pr-10"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
-              placeholder="Confirm Password"
             />
+
             <button
               type="button"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-3 text-gray-500"
+              onClick={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
+              className="absolute right-3 top-3"
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -257,53 +202,48 @@ const SignUpPhase2 = ({ onPrev, formData, setFormData }) => {
 
           {/* ERROR */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
+            <p className="text-red-500 text-sm">{error}</p>
           )}
 
+          {/* BUTTON */}
           <button
-            onClick={handleSendOTP}
-            className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            onClick={handleSendOtp}
+            disabled={loading}
+            className="w-full bg-green-500 text-white p-3 rounded"
           >
-            {isLoading ? "Sending..." : "Send OTP"}
-          </button>
-
-          <button
-            onClick={() => setAuthMethod(null)}
-            className="text-gray-600 w-full"
-          >
-            Back
+            {loading ? "Sending OTP..." : "Send OTP"}
           </button>
         </div>
-      ) : (
+      )}
+
+      {/* OTP STEP */}
+      {step === "otp" && (
         <div className="space-y-4">
 
-          {/* OTP */}
           <input
+            type="text"
+            placeholder="Enter OTP"
+            className="w-full border p-3 rounded text-center text-xl tracking-widest"
             value={otp}
             onChange={(e) =>
               setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
             }
-            className="w-full text-center text-2xl tracking-widest border py-3 rounded-lg focus:ring-2 focus:ring-green-500"
-            placeholder="Enter OTP"
           />
 
-          {/* ERROR */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-              {error}
-            </div>
+            <p className="text-red-500 text-sm">{error}</p>
           )}
 
           <button
-            onClick={handleVerifyOTP}
-            className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            onClick={handleVerifyOtp}
+            disabled={loading}
+            className="w-full bg-green-500 text-white p-3 rounded"
           >
-            {isLoading ? "Verifying..." : "Verify & Continue"}
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </div>
       )}
+
     </div>
   );
 };

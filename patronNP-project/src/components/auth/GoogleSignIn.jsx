@@ -2,16 +2,10 @@ import React from 'react';
 
 const GoogleSignIn = ({ onSuccess }) => {
   const handleGoogleClick = () => {
-    // For now, this is a placeholder
-    // In production, integrate with @react-oauth/google package
+
     console.log('Google Sign In clicked');
     
-    // Example: Replace this with actual Google OAuth implementation
-    // For setup instructions, see:
-    // 1. Install: npm install @react-oauth/google
-    // 2. Get Client ID from Google Cloud Console
-    // 3. Wrap your app with GoogleOAuthProvider
-    // 4. Use GoogleLogin component from @react-oauth/google
+
   };
 
   return (
