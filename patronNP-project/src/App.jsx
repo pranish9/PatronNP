@@ -6,7 +6,8 @@ import useThemeStore from './stores/themeStore'
 import Home from './pages/Home'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
-import OnboardingContainer from './pages/OnboardingContainer'
+import VerifyOTPPage from './pages/VerifyOTPPage'
+import OnboardingProfile from './pages/OnboardingProfile'
 import Dashboard from './pages/Dashboard'
 import CreatorProfile from './pages/CreatorProfile'
 import Explore from './pages/Explore'
@@ -34,6 +35,7 @@ const App = () => {
       <Route path="/" element={<Home />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />
       
       {/* Creator Profile - supports both /@username and /username */}
@@ -45,7 +47,7 @@ const App = () => {
         path="/onboarding"
         element={
           <ProtectedRoute>
-            <OnboardingContainer />
+            <OnboardingProfile />
           </ProtectedRoute>
         }
       />

@@ -35,7 +35,7 @@ const OnboardingContainer = () => {
   }, []);
 
   const handleNextStep = () => {
-    if (currentStep < 2) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
     }

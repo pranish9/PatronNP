@@ -25,6 +25,10 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // OTP Timer State
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [canResendOtp, setCanResendOtp] = useState(false);
+
   // GOOGLE SIGN-UP HANDLER
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -80,6 +84,19 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
 
   const isStrongPassword = () => strength >= 4;
 
+  // OTP Timer Effect
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (otpTimer === 0 && step === "otp") {
+      setCanResendOtp(true);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer, step]);
+
   // SEND OTP
   const handleSendOtp = async () => {
     setError("");
@@ -101,7 +118,15 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
       });
 
       toast.success("OTP sent successfully");
-      setStep("otp");
+      
+      // Navigate to OTP verification page with data
+      navigate("/verify-otp", {
+        state: {
+          username,
+          email,
+          password,
+        },
+      });
 
     } catch (err) {
         const status = err.response?.status;
@@ -119,58 +144,20 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
     }
   };
 
-  // VERIFY OTP + REGISTER
-const handleVerifyOtp = async () => {
-  setError("");
-
-  if (otp.length !== 6) {
-    return setError("Enter valid 6 digit OTP");
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await axios.post(
-      "http://localhost:8080/auth/verify-otp-register",
-      {
-        username,
-        email,
-        password,
-        otp,
-      }
-    );
-
-    localStorage.setItem("accessToken", res.data.token);
-
-    toast.success("Account created successfully");
-    navigate("/onboarding");
-
-  } catch (err) {
-    const msg =
-      err.response?.data ||
-      err.response?.data?.message ||
-      "Something went wrong";
-
-    // 👇 IMPORTANT: show backend message properly
-    setError(msg);
-
-    toast.error(msg);
-  } finally {
-    setLoading(false);
-  }
-};
-
   return (
     <div className="max-w-md mx-auto">
 
       {/* HEADER */}
       <div className="flex items-center mb-8">
-        <button onClick={onPrev} className="mr-4 p-2">
+        <button 
+          onClick={step === "otp" ? () => setStep("form") : onPrev} 
+          className="mr-4 p-2 hover:bg-gray-100 rounded"
+        >
           <ArrowLeft size={20} />
         </button>
 
         <h1 className="text-2xl font-bold">
-          {authMethod === "google" ? "Complete Google Sign-up" : "Email Verification"}
+          {step === "otp" ? "Verify Your Email" : authMethod === "google" ? "Complete Google Sign-up" : "Email & Password"}
         </h1>
       </div>
 
@@ -287,34 +274,6 @@ const handleVerifyOtp = async () => {
             className="w-full bg-green-500 text-white p-3 rounded"
           >
             {loading ? "Sending OTP..." : "Send OTP"}
-          </button>
-        </div>
-      )}
-
-      {/* OTP STEP */}
-      {step === "otp" && authMethod === "email" && (
-        <div className="space-y-4">
-
-          <input
-            type="text"
-            placeholder="Enter OTP"
-            className="w-full border p-3 rounded text-center text-xl tracking-widest"
-            value={otp}
-            onChange={(e) =>
-              setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-            }
-          />
-
-          {error && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
-
-          <button
-            onClick={handleVerifyOtp}
-            disabled={loading}
-            className="w-full bg-green-500 text-white p-3 rounded"
-          >
-            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </div>
       )}
