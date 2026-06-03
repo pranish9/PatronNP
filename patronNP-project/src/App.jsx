@@ -9,7 +9,7 @@ import SignUp from './pages/SignUp'
 import VerifyOTPPage from './pages/VerifyOTPPage'
 import OnboardingProfile from './pages/OnboardingProfile'
 import Dashboard from './pages/Dashboard'
-import CreatorProfile from './pages/CreatorProfile'
+import CreatorProfile from './pages/OnboardingSteps/CreatorProfile'
 import Explore from './pages/Explore'
 
 // Protected Route Component

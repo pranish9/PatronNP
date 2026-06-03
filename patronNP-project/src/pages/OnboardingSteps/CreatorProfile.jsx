@@ -1,9 +1,9 @@
 import { Heart, Share2, MessageCircle, MapPin, Link as LinkIcon } from 'lucide-react'
 import { useParams } from 'react-router-dom'
-import Layout from '../components/Layout'
-import Card from '../components/Card'
-import Button from '../components/Button'
-import { useLanguage } from '../hooks/useLanguage'
+import Layout from '../../components/Layout'
+import Card from '../../components/Card'
+import Button from '../../components/Button'
+import { useLanguage } from '../../hooks/useLanguage'
 
 export const CreatorProfile = () => {
   const { username } = useParams()
