@@ -26,7 +26,7 @@ const SignIn = () => {
     const token = localStorage.getItem("accessToken");
     const user = localStorage.getItem("user");
 
-    if (token && user) {
+    if (token) {
       navigate("/dashboard");
     }
   }, [navigate]);
