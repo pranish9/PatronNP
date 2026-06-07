@@ -11,6 +11,7 @@ import OnboardingProfile from './pages/OnboardingProfile'
 import Dashboard from './pages/Dashboard'
 import CreatorProfile from './pages/OnboardingSteps/CreatorProfile'
 import Explore from './pages/Explore'
+import OnboardingPhase2 from './pages/OnboardingSteps/OnboardingPhase2'
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -37,6 +38,7 @@ const App = () => {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />
+      <Route path="/payment-setup" element={<OnboardingPhase2 />} />
       
       {/* Creator Profile - supports both /@username and /username */}
       <Route path="/@:username" element={<CreatorProfile />} />

@@ -113,7 +113,7 @@ const OnboardingProfile = () => {
         "Profile completed successfully"
       );
 
-      navigate("/dashboard");
+      navigate("/payment-setup");
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
