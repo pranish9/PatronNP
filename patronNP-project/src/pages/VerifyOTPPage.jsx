@@ -66,7 +66,7 @@ const VerifyOTPPage = () => {
 
       toast.success("Account created successfully");
 
-      navigate("/payment-setup");
+      navigate("/onboarding");
     } catch (err) {
       const message =
         err.response?.data?.message ||

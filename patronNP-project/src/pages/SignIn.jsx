@@ -27,7 +27,7 @@ const SignIn = () => {
     const user = localStorage.getItem("user");
 
     if (token) {
-      navigate("/dashboard");
+      navigate("/onboarding");
     }
   }, [navigate]);
 
@@ -63,10 +63,15 @@ const googleLogin = useGoogleLogin({
 
       localStorage.setItem("accessToken", data.token);
       localStorage.setItem("user", JSON.stringify(data));
-
-      toast.success("Login successful");
-
-      navigate("/dashboard");
+      localStorage.setItem("onboardingCompleted", data.onboardingCompleted);
+      
+      toast.success("Logged in successfully with Google");
+      if (data.onboardingCompleted) {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
+      
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -140,22 +145,25 @@ const googleLogin = useGoogleLogin({
         }
       );
 
-      localStorage.setItem(
-        "accessToken",
-        res.data.token
-      );
+      localStorage.setItem("accessToken", res.data.token);
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          id: res.data.id,
-          username: res.data.username,
-          email: res.data.email,
-          role: res.data.role,
-        })
-      );
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            id: res.data.id,
+            username: res.data.username,
+            email: res.data.email,
+            role: res.data.role,
+          })
+        );
 
-      navigate("/dashboard");
+        localStorage.setItem("onboardingCompleted", res.data.onboardingCompleted);
+
+        if (res.data.onboardingCompleted) {
+          navigate("/dashboard");
+        } else {
+          navigate("/onboarding");
+        }
 
     } catch (err) {
       setOtp("");

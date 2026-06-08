@@ -14,10 +14,23 @@ export const Dashboard = () => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
 
-  const handleLogout = () => {
-    logout()
-    navigate('/signin')
-  }
+const handleLogout = () => {
+  // Reset auth store
+  logout();
+
+  // Remove auth data
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("user");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("onboardingCompleted");
+  localStorage.removeItem("auth-store");
+
+  // Clear session storage
+  sessionStorage.clear();
+
+  // Redirect to sign in page
+  navigate("/signin", { replace: true });
+};
 
   // Mock data
   const stats = {
