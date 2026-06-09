@@ -1,165 +1,160 @@
+import { useEffect, useState } from "react";
+import { useParams, Navigate } from "react-router-dom";
+import axios from "axios";
+
 import {
   Heart,
   Share2,
-  Link as LinkIcon
+  Link as LinkIcon,
 } from "lucide-react";
 
-import {
-  useParams,
-  Navigate
-} from "react-router-dom";
-
-import Layout from "../../components/Layout";
-import Card from "../../components/Card";
 import Button from "../../components/Button";
+import Card from "../../components/Card";
 import { useLanguage } from "../../hooks/useLanguage";
 
-export const CreatorProfile = () => {
+const CreatorProfile = () => {
   const { username } = useParams();
   const { t } = useLanguage();
 
-  // Authentication Check
+  const [creator, setCreator] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+
   const token = localStorage.getItem("accessToken");
 
-  if (!token) {
-    return <Navigate to="/signin" replace />;
-  }
+  const loggedInUser = token
+    ? JSON.parse(localStorage.getItem("user"))
+    : null;
 
-  // Onboarding Check
-  const onboardingCompleted =
-    localStorage.getItem("onboardingCompleted") === "true";
+  useEffect(() => {
+    fetchCreator();
+  }, [username]);
 
-  if (!onboardingCompleted) {
-    return <Navigate to="/onboarding" replace />;
-  }
+  const fetchCreator = async () => {
+    try {
+      setLoading(true);
 
-  // Mock creator data
-  const creator = {
-    username: username || "johndoe",
-    displayName: "John Doe",
-    bio: "Content creator, photographer, and digital nomad. 📸 Exploring the world one frame at a time!",
-    profilePicture: "https://via.placeholder.com/120",
-    coverBanner: "https://via.placeholder.com/1200x300",
-    followers: 1250,
-    earnings: "NP",
-    social: {
-      instagram: "@johndoe",
-      twitter: "@johndoe",
-      youtube: "@johndoe",
-      website: "https://johndoe.com",
-    },
+      const res = await axios.get(
+        `http://localhost:8080/api/creators/${username}`
+      );
+
+      setCreator(res.data);
+      setNotFound(false);
+    } catch (err) {
+      setNotFound(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const recentSupporters = [
-    {
-      id: 1,
-      name: "Anonymous",
-      amount: 500,
-    },
-    {
-      id: 2,
-      name: "Sita P.",
-      amount: 1000,
-    },
-    {
-      id: 3,
-      name: "Ram S.",
-      amount: 750,
-    },
-  ];
+  // -------------------------
+  // STATES
+  // -------------------------
+
+  if (loading) {
+    return <div className="p-10">Loading...</div>;
+  }
+
+  if (notFound || !creator) {
+    return (
+      <div className="p-10 text-center">
+        <h1 className="text-2xl font-bold">404 Creator Not Found</h1>
+      </div>
+    );
+  }
+
+  // OWNER CHECK
+  const isOwner =
+    loggedInUser?.username === creator.username;
+
+  // -------------------------
+  // RENDER
+  // -------------------------
 
   return (
-    <Layout>
-      <div className="space-y-8">
+    <div className="space-y-8">
 
-        {/* Cover Banner */}
-        <div className="h-40 md:h-64 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 relative -mx-4 sm:mx-0">
+      {/* COVER */}
+      <div className="h-48 bg-gray-200">
+        {creator.coverImageUrl && (
           <img
-            src={creator.coverBanner}
-            alt="cover"
+            src={creator.coverImageUrl}
             className="w-full h-full object-cover"
           />
-        </div>
+        )}
+      </div>
 
-        {/* Profile Section */}
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
+      {/* PROFILE */}
+      <div className="max-w-4xl mx-auto px-4">
 
-          {/* Profile Header */}
-          <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end -mt-20 relative z-10">
-            <div>
-              <img
-                src={creator.profilePicture}
-                alt={creator.displayName}
-                className="w-32 h-32 rounded-full border-4 border-white dark:border-slate-900 shadow-lg"
-              />
-            </div>
+        <div className="flex items-center gap-4 -mt-16">
 
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold">
-                {creator.displayName}
-              </h1>
+          <img
+            src={creator.profilePictureUrl}
+            className="w-32 h-32 rounded-full border-4 bg-white"
+          />
 
-              <p className="text-xl text-slate-600 dark:text-slate-400">
-                @{creator.username}
-              </p>
+          <div>
+            <h1 className="text-3xl font-bold">
+              {creator.displayName}
+            </h1>
 
-              <p className="text-slate-600 dark:text-slate-400 mt-2">
-                {creator.bio}
-              </p>
+            <p className="text-gray-500">
+              @{creator.username}
+            </p>
 
-              <div className="flex gap-4 mt-4 text-sm text-slate-600 dark:text-slate-400">
-                <span>
-                  👥 {creator.followers.toLocaleString()}{" "}
-                  {t("creator.followers")}
-                </span>
-              </div>
-            </div>
+            <p className="mt-2 text-gray-600">
+              {creator.bio}
+            </p>
 
-            <div className="flex gap-2">
-              <Button variant="outline" size="md">
-                <Share2 size={20} />
-              </Button>
-            </div>
+            <p className="text-sm mt-1">
+              👥 {creator.supporterCount} supporters
+            </p>
           </div>
 
-          {/* Keep the rest of your existing JSX here */}
+          {/* ACTIONS */}
+          <div className="ml-auto flex gap-2">
 
+            {isOwner ? (
+              <>
+                <Button>Edit Page</Button>
+                <Button variant="outline">
+                  Dashboard
+                </Button>
+              </>
+            ) : token ? (
+              <Button>
+                <Heart size={16} />
+                Support
+              </Button>
+            ) : (
+              <Button>
+                Login to Support
+              </Button>
+            )}
+
+          </div>
         </div>
+
+        {/* SUPPORT SECTION */}
+        {!isOwner && (
+          <Card className="mt-8">
+            <h2 className="text-xl font-bold mb-4">
+              Support {creator.displayName}
+            </h2>
+
+            <div className="flex gap-3">
+              {[500, 1000, 2000].map((amt) => (
+                <Button key={amt}>
+                  Rs {amt}
+                </Button>
+              ))}
+            </div>
+          </Card>
+        )}
+
       </div>
-    </Layout>
-  );
-};
-
-const SocialLink = ({ icon, label, value }) => {
-  const url =
-    value.startsWith("http")
-      ? value
-      : `https://${value.replace("@", "")}`;
-
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-    >
-      <span className="text-xl">{icon}</span>
-
-      <div className="flex-1">
-        <p className="text-xs text-slate-500">
-          {label}
-        </p>
-
-        <p className="font-medium text-sm">
-          {value}
-        </p>
-      </div>
-
-      <LinkIcon
-        size={16}
-        className="text-slate-400"
-      />
-    </a>
+    </div>
   );
 };
 

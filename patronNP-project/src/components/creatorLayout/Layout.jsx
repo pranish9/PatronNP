@@ -1,13 +1,11 @@
 
 
-import { Navbar } from './Navbar'
-import { Sidebar } from './Sidebar' // Assuming you have or will create this
+import Sidebar from '../Sidebar'
 
 export const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col">
       {/* Top Navbar */}
-      <Navbar />
 
       <div className="flex flex-1">
         {/* Sidebar - Hidden on small screens, visible on medium+ */}

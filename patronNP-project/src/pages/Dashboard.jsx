@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Settings, TrendingUp, Users, Heart, LogOut } from 'lucide-react'
-import Layout from '../components/Layout'
+import Layout from '../components/creatorLayout/Layout'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import Alert from '../components/Alert'

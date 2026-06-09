@@ -1,50 +1,73 @@
-import React, { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
-import useThemeStore from './stores/themeStore'
+import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 
-// Pages
-import Home from './pages/Home'
-import SignIn from './pages/SignIn'
-import SignUp from './pages/SignUp'
-import VerifyOTPPage from './pages/VerifyOTPPage'
-import OnboardingProfile from './pages/OnboardingProfile'
-import Dashboard from './pages/Dashboard'
-import CreatorProfile from './pages/OnboardingSteps/CreatorProfile'
-import Explore from './pages/Explore'
-import OnboardingPhase2 from './pages/OnboardingSteps/OnboardingPhase2'
+import useThemeStore from "./stores/themeStore";
 
-// Protected Route Component
+// Public Pages
+import Home from "./pages/Home";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import VerifyOTPPage from "./pages/VerifyOTPPage";
+import Explore from "./pages/Explore";
+
+// Protected Pages
+import Dashboard from "./pages/Dashboard";
+import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
+import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
+
+// Creator Public Page
+import CreatorProfile from "./pages/OnboardingSteps/CreatorProfile";
+
+// Layouts
+import PublicCreatorLayout from "./components/PublicCreatorLayout/PublicCreatorLayout";
+
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('accessToken')
-  return isAuthenticated ? children : <Navigate to="/signin" replace />
-}
+  const isAuthenticated = localStorage.getItem("accessToken");
+
+  return isAuthenticated ? (
+    children
+  ) : (
+    <Navigate to="/signin" replace />
+  );
+};
 
 const App = () => {
-  const { isDark } = useThemeStore()
+  const { isDark } = useThemeStore();
 
   useEffect(() => {
     if (isDark) {
-      document.documentElement.classList.add('dark')
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.remove("dark");
     }
-  }, [isDark])
+  }, [isDark]);
 
   return (
     <Routes>
-      {/* Public Routes */}
+      {/* =========================
+          PUBLIC ROUTES
+      ========================== */}
       <Route path="/" element={<Home />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />
-      <Route path="/payment-setup" element={<OnboardingPhase2 />} />
-      
-      {/* Creator Profile - supports both /@username and /username */}
-      <Route path="/@:username" element={<CreatorProfile />} />
-      <Route path="/:username" element={<CreatorProfile />} />
 
-      {/* Protected Routes */}
+      {/* =========================
+          PUBLIC CREATOR PAGE
+          Example:
+          /pranish
+          /ramsharma
+          /@pranish
+      ========================== */}
+      <Route element={<PublicCreatorLayout />}>
+        <Route path="/@:username" element={<CreatorProfile />} />
+        <Route path="/:username" element={<CreatorProfile />} />
+      </Route>
+
+      {/* =========================
+          PROTECTED ROUTES
+      ========================== */}
       <Route
         path="/onboarding"
         element={
@@ -53,6 +76,16 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/payment-setup"
+        element={
+          <ProtectedRoute>
+            <OnboardingPhase2 />
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/dashboard"
         element={
@@ -62,10 +95,12 @@ const App = () => {
         }
       />
 
-      {/* Catch-all */}
+      {/* =========================
+          404 FALLBACK
+      ========================== */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
-}
+  );
+};
 
-export default App
+export default App;

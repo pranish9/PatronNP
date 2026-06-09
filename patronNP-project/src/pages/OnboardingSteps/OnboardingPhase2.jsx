@@ -110,7 +110,7 @@ const SupportForm = () => {
 
       alert("Verification Successful");
 
-      navigate("/dashboard", {
+      navigate("/${data.username}", {
         replace: true,
       });
     } catch (err) {
