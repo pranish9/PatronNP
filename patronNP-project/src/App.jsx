@@ -9,12 +9,12 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import VerifyOTPPage from "./pages/VerifyOTPPage";
 import Explore from "./pages/Explore";
-
+import Layout from "./components/creatorLayout/Layout";
 // Protected Pages
 import Dashboard from "./pages/Dashboard";
 import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
 import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
-
+import ExploreCreator from "./pages/CreatorPage/ExploreCreator";
 // Creator Public Page
 import CreatorProfile from "./pages/OnboardingSteps/CreatorProfile";
 
@@ -52,7 +52,7 @@ const App = () => {
       <Route path="/signup" element={<SignUp />} />
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />
-
+<Route path="/explore-creator" element={<ExploreCreator />} />
       {/* =========================
           PUBLIC CREATOR PAGE
           Example:
@@ -64,7 +64,9 @@ const App = () => {
         <Route path="/@:username" element={<CreatorProfile />} />
         <Route path="/:username" element={<CreatorProfile />} />
       </Route>
-
+      <Route element={<Layout />}>
+        
+      </Route>
       {/* =========================
           PROTECTED ROUTES
       ========================== */}

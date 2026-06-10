@@ -18,7 +18,7 @@ const SupportForm = () => {
     const verified = localStorage.getItem("paymentVerified");
 
     if (verified === "true") {
-      navigate("/dashboard", { replace: true });
+      navigate("/${data.username}", { replace: true });
     }
   }, [navigate]);
 

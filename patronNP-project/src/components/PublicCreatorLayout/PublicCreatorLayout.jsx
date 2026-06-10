@@ -3,7 +3,7 @@ import Navbar from "./Navbar";
 
 const PublicCreatorLayout = () => {
   return (
-    <div className="min-h-screen bg-white">
+    <div>
       <Navbar />
       <Outlet />
     </div>

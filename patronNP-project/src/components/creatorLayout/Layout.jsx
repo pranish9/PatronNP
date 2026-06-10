@@ -1,7 +1,7 @@
 
 
-import Sidebar from '../Sidebar'
-
+import Sidebar from './Sidebar'
+import RightSidebar from './RightSidebar'
 export const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col">
@@ -14,9 +14,11 @@ export const Layout = ({ children }) => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full">
+        <main className="flex-1 p-0 md:p-0 max-w-7xl mx-auto w-full">
           {children}
         </main>
+        
+        <RightSidebar />
       </div>
     </div>
   )

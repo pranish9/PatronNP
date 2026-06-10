@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 
-import {
-  Heart,
-  Share2,
-  Link as LinkIcon,
-} from "lucide-react";
+import { Heart } from "lucide-react";
 
 import Button from "../../components/Button";
 import Card from "../../components/Card";
 import { useLanguage } from "../../hooks/useLanguage";
+
+import { getAuthUser, isAuthenticated } from "../../utils/auth";
 
 const CreatorProfile = () => {
   const { username } = useParams();
@@ -18,59 +16,66 @@ const CreatorProfile = () => {
 
   const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [error, setError] = useState(null);
 
-  const token = localStorage.getItem("accessToken");
+  const authUser = getAuthUser();
+  const token = isAuthenticated();
 
-  const loggedInUser = token
-    ? JSON.parse(localStorage.getItem("user"))
-    : null;
-
+  // -----------------------
+  // FETCH CREATOR
+  // -----------------------
   useEffect(() => {
+    const fetchCreator = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axios.get(
+          `http://localhost:8080/api/creators/${username}`
+        );
+
+        setCreator(res.data);
+        setError(null);
+      } catch (err) {
+        setError("NOT_FOUND");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCreator();
   }, [username]);
 
-  const fetchCreator = async () => {
-    try {
-      setLoading(true);
-
-      const res = await axios.get(
-        `http://localhost:8080/api/creators/${username}`
-      );
-
-      setCreator(res.data);
-      setNotFound(false);
-    } catch (err) {
-      setNotFound(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // -------------------------
+  // -----------------------
   // STATES
-  // -------------------------
-
+  // -----------------------
   if (loading) {
-    return <div className="p-10">Loading...</div>;
-  }
-
-  if (notFound || !creator) {
     return (
       <div className="p-10 text-center">
-        <h1 className="text-2xl font-bold">404 Creator Not Found</h1>
+        Loading creator profile...
       </div>
     );
   }
 
-  // OWNER CHECK
+  if (error || !creator) {
+    return (
+      <div className="p-10 text-center">
+        <h1 className="text-2xl font-bold">
+          404 Creator Not Found
+        </h1>
+      </div>
+    );
+  }
+
+  // -----------------------
+  // OWNER CHECK (IMPORTANT)
+  // -----------------------
   const isOwner =
-    loggedInUser?.username === creator.username;
+    token &&
+    authUser?.username === creator.username;
 
-  // -------------------------
+  // -----------------------
   // RENDER
-  // -------------------------
-
+  // -----------------------
   return (
     <div className="space-y-8">
 

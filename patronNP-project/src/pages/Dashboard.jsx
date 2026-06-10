@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Settings, TrendingUp, Users, Heart, LogOut } from 'lucide-react'
+import { Settings, TrendingUp, Users, Heart, LogOut, Share2, Lock, ShoppingBag, FileText, ChevronRight } from 'lucide-react'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend } from 'chart.js'
+import { Line } from 'react-chartjs-2'
 import Layout from '../components/creatorLayout/Layout'
 import Card from '../components/Card'
 import Button from '../components/Button'
@@ -8,166 +10,193 @@ import { useLanguage } from '../hooks/useLanguage'
 import useAuthStore from '../stores/authStore'
 import { useNavigate } from 'react-router-dom'
 
+// Register ChartJS modules
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend)
+
 export const Dashboard = () => {
   const { t } = useLanguage()
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
 
-const handleLogout = () => {
-  // Reset auth store
-  logout();
+  const handleLogout = () => {
+    logout();
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/signin", { replace: true });
+  };
 
-  // Remove auth data
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("user");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("onboardingCompleted");
-  localStorage.removeItem("auth-store");
-
-  // Clear session storage
-  sessionStorage.clear();
-
-  // Redirect to sign in page
-  navigate("/signin", { replace: true });
-};
-
-  // Mock data
+  // Mock data tailored for Chart.js implementation
   const stats = {
-    totalEarnings: 15500,
-    totalSupporters: 42,
-    profileViews: 1205,
-    monthlyEarnings: 3200,
+    totalEarnings: 0,
+    supportersCount: 0,
+    membershipCount: 0,
+    shopCount: 0,
   }
 
-  const recentSupporters = [
-    { id: 1, name: 'Ram Sharma', amount: 500, date: '2 hours ago' },
-    { id: 2, name: 'Sita Poudel', amount: 1000, date: '5 hours ago' },
-    { id: 3, name: 'Hari Kc', amount: 750, date: '1 day ago' },
-  ]
+  // Chart configs mimicking clean financial metrics
+  const chartData = {
+    labels: ['May 15', 'May 20', 'May 25', 'May 30', 'Jun 05', 'Jun 10'],
+    datasets: [
+      {
+        fill: true,
+        label: 'Earnings',
+        data: [0, 0, 0, 0, 0, 0], // Matches the zero state shown in the image safely
+        borderColor: '#10b981', // Emerald green brand color
+        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+        tension: 0.4,
+      },
+    ],
+  }
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      y: { min: 0, max: 10, ticks: { stepSize: 2 } },
+      x: { grid: { display: false } }
+    }
+  }
 
   return (
     <Layout>
-      <div className="py-12 px-4 space-y-8">
-        {/* Header */}
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-start mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.email || 'Creator'}!</h1>
-              <p className="text-slate-600 dark:text-slate-400">Here's what's happening with your account</p>
+      <div className="bg-gray-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          
+          {/* Main Workspace Frame */}
+          <div className="bg-white rounded-1xl border border-gray-100 p-6 md:p-8 shadow-sm space-y-8">
+            
+            {/* Creator Header Profile Bar */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                  P
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 leading-tight">Hi, PRANISH RAJ TUADHAR</h2>
+                  <p className="text-sm text-gray-400 font-medium">buymeacoffee.com/pranishxgrowth</p>
+                </div>
+              </div>
+              <button className="flex items-center gap-2 bg-[#212121] text-white hover:bg-black text-xs font-semibold px-4 py-2 rounded-full transition-all">
+                <Share2 size={14} />
+                Share page
+              </button>
             </div>
-            <div className="flex gap-3">
-              <Button variant="ghost" size="md">
-                <Settings size={20} />
+
+            {/* Earnings Section & ChartJS Visualizer */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-2xl font-bold text-gray-900">Earnings</h3>
+                <span className="text-xs bg-gray-100 text-gray-600 font-semibold px-2.5 py-1 rounded-md border border-gray-200">
+                  Last 30 days
+                </span>
+              </div>
+
+              <div className="text-5xl font-black text-gray-900 tracking-tight">
+                ${stats.totalEarnings}
+              </div>
+
+              {/* Minimalist Legend Pills */}
+              <div className="flex flex-wrap gap-4 text-xs font-medium text-gray-500">
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-amber-200"></span> ${stats.supportersCount} Supporters</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-pink-200"></span> ${stats.membershipCount} Membership</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-cyan-200"></span> ${stats.shopCount} Shop</span>
+              </div>
+
+              {/* Dynamic Chart Area */}
+              <div className="h-48 w-full pt-4 border border-dashed border-gray-200 rounded-2xl p-4 bg-gray-50/50">
+                <Line data={chartData} options={chartOptions} />
+              </div>
+            </div>
+
+            {/* Zero State Messaging Overlay Block */}
+            <div className="border border-gray-100 rounded-2xl py-12 text-center bg-white shadow-xs max-w-xl mx-auto">
+              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 border border-gray-100">
+                <Heart size={20} />
+              </div>
+              <h4 className="text-base font-bold text-gray-900">You don't have any supporters yet</h4>
+              <p className="text-xs text-gray-400 mt-1">Share your page with your audience to get started.</p>
+            </div>
+
+          </div>
+
+          {/* Monetization Feature Grid Blocks ("More ways to earn") */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-gray-800">More ways to earn</h3>
+            
+            <div className="grid sm:grid-cols-3 gap-4">
+              
+              {/* Membership Card */}
+              <div className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
+                    <Lock size={16} />
+                  </div>
+                  <h4 className="font-bold text-gray-900 text-sm">Membership</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed">Monthly membership for your biggest fans and supporters.</p>
+                </div>
+                <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
+                  <span>View</span>
+                  <ChevronRight size={14} className="text-gray-400" />
+                </button>
+              </div>
+
+              {/* Shop Card */}
+              <div className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
+                    <ShoppingBag size={16} />
+                  </div>
+                  <h4 className="font-bold text-gray-900 text-sm">Shop</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed">Introducing Shop, the creative way to sell digital goodies.</p>
+                </div>
+                <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
+                  <span>Enable</span>
+                  <ChevronRight size={14} className="text-gray-400" />
+                </button>
+              </div>
+
+              {/* Exclusive Posts Card */}
+              <div className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-all group">
+                <div className="space-y-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
+                    <FileText size={16} />
+                  </div>
+                  <h4 className="font-bold text-gray-900 text-sm">Exclusive posts</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed">Publish your best content exclusively for your supporters.</p>
+                </div>
+                <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
+                  <span>Write a post</span>
+                  <ChevronRight size={14} className="text-gray-400" />
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Traditional Global Action Utilities (Bottom Bar Layout Placement) */}
+          <div className="flex justify-between items-center bg-white border border-gray-100 p-4 rounded-2xl">
+            <div className="text-xs text-gray-400 font-medium">
+              Logged in as: <span className="text-gray-700 font-semibold">{user?.email || 'Creator'}</span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" className="p-2">
+                <Settings size={16} />
               </Button>
-              <Button variant="secondary" size="md" onClick={handleLogout}>
-                <LogOut size={20} />
+              <Button variant="secondary" size="sm" className="text-xs py-1.5 flex items-center gap-1.5" onClick={handleLogout}>
+                <LogOut size={14} />
                 {t('common.logout')}
               </Button>
             </div>
           </div>
 
-          {/* Profile Completion Alert */}
-          <Alert type="info" title="Profile Setup" message="Complete your profile to publish your creator page" />
-        </div>
-
-        {/* Stats Grid */}
-        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-4">
-          <StatsCard 
-            icon={<Heart className="text-pink-600" size={24} />}
-            label={t('dashboard.earnings')}
-            value={`Rs. ${stats.totalEarnings}`}
-          />
-          <StatsCard 
-            icon={<Users className="text-blue-600" size={24} />}
-            label={t('dashboard.supporters')}
-            value={stats.totalSupporters}
-          />
-          <StatsCard 
-            icon={<TrendingUp className="text-purple-600" size={24} />}
-            label={t('dashboard.views')}
-            value={stats.profileViews}
-          />
-          <StatsCard 
-            icon={<Heart className="text-red-600" size={24} />}
-            label="This Month"
-            value={`Rs. ${stats.monthlyEarnings}`}
-          />
-        </div>
-
-        {/* Tabs */}
-        <div className="max-w-6xl mx-auto">
-          <div className="flex gap-4 border-b border-slate-200 dark:border-slate-700 mb-6">
-            {['overview', 'supporters', 'analytics'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-3 font-medium border-b-2 transition ${
-                  activeTab === tab
-                    ? 'border-purple-600 text-purple-600'
-                    : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'overview' && <OverviewTab stats={stats} t={t} />}
-          {activeTab === 'supporters' && <SupportersTab supporters={recentSupporters} t={t} />}
-          {activeTab === 'analytics' && <AnalyticsTab t={t} />}
         </div>
       </div>
     </Layout>
   )
 }
 
-const StatsCard = ({ icon, label, value }) => (
-  <Card className="flex items-start gap-4">
-    <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">{icon}</div>
-    <div>
-      <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">{label}</p>
-      <p className="text-2xl font-bold">{value}</p>
-    </div>
-  </Card>
-)
-
-const OverviewTab = ({ stats, t }) => (
-  <div className="space-y-6">
-    <Card>
-      <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
-      <div className="grid md:grid-cols-3 gap-4">
-        <Button size="full" variant="outline">Edit Profile</Button>
-        <Button size="full" variant="outline">Payment Settings</Button>
-        <Button size="full" variant="outline">View Public Page</Button>
-      </div>
-    </Card>
-  </div>
-)
-
-const SupportersTab = ({ supporters, t }) => (
-  <Card>
-    <h3 className="text-xl font-semibold mb-4">{t('creator.recentSupporters')}</h3>
-    <div className="space-y-3">
-      {supporters.map((supporter) => (
-        <div key={supporter.id} className="flex justify-between items-center py-3 border-b border-slate-200 dark:border-slate-700 last:border-0">
-          <div>
-            <p className="font-medium">{supporter.name}</p>
-            <p className="text-sm text-slate-500">{supporter.date}</p>
-          </div>
-          <p className="font-semibold text-purple-600">Rs. {supporter.amount}</p>
-        </div>
-      ))}
-    </div>
-  </Card>
-)
-
-const AnalyticsTab = ({ t }) => (
-  <Card>
-    <h3 className="text-xl font-semibold mb-4">{t('creator.analytics')}</h3>
-    <p className="text-slate-600 dark:text-slate-400">Analytics coming soon...</p>
-  </Card>
-)
-
-export default Dashboard
+export default Dashboard;
