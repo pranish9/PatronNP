@@ -66,8 +66,9 @@ const Sidebar = () => {
     <>
       {/* Mobile Toggle */}
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow"
+        className="md:hidden fixed top-3 left-3 z-50 p-2.5 bg-white rounded-xl shadow-md border border-slate-200"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
+        aria-label="Toggle menu"
       >
         {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -83,7 +84,7 @@ const Sidebar = () => {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-300 ${
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          isMobileOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 overflow-y-auto`}
       >
         <div className="p-4 flex flex-col gap-6">

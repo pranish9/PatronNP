@@ -1,27 +1,22 @@
+import Sidebar from "./Sidebar";
+import RightSidebar from "./RightSidebar";
 
-
-import Sidebar from './Sidebar'
-import RightSidebar from './RightSidebar'
 export const Layout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col">
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50">
+      <Sidebar />
 
-      <div className="flex flex-1">
-        {/* Sidebar - Hidden on small screens, visible on medium+ */}
-        <aside className="hidden md:block w-64 border-r border-slate-200 dark:border-slate-800">
-          <Sidebar />
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-0 md:p-0 max-w-7xl mx-auto w-full">
-          {children}
+      <div className="flex min-h-screen md:pl-64">
+        <main className="flex-1 min-w-0 w-full pt-14 md:pt-0">
+          <div className="max-w-7xl mx-auto w-full px-3 sm:px-4 md:px-0 py-4 sm:py-0">
+            {children}
+          </div>
         </main>
-        
+
         <RightSidebar />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Layout
+export default Layout;

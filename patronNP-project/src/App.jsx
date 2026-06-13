@@ -15,21 +15,34 @@ import Dashboard from "./pages/Dashboard";
 import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
 import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
 import ExploreCreator from "./pages/CreatorPage/ExploreCreator";
-// Creator Public Page
+// Creator Public Pages
 import CreatorProfile from "./pages/OnboardingSteps/CreatorProfile";
+import CreatorPosts from "./pages/CreatorPage/CreatorPosts";
+import CreatorPostDetail from "./pages/CreatorPage/CreatorPostDetail";
+import CreatorMembership from "./pages/CreatorPage/CreatorMembership";
+import CreatorShop from "./pages/CreatorPage/CreatorShop";
+import CreatorShopItem from "./pages/CreatorPage/CreatorShopItem";
+import CreatorCheckout from "./pages/CreatorPage/CreatorCheckout";
 
 // Layouts
 import PublicCreatorLayout from "./components/PublicCreatorLayout/PublicCreatorLayout";
 
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem("accessToken");
-
-  return isAuthenticated ? (
-    children
-  ) : (
-    <Navigate to="/signin" replace />
-  );
+  return isAuthenticated ? children : <Navigate to="/signin" replace />;
 };
+
+const creatorNestedRoutes = (
+  <>
+    <Route index element={<CreatorProfile />} />
+    <Route path="posts" element={<CreatorPosts />} />
+    <Route path="posts/:postId" element={<CreatorPostDetail />} />
+    <Route path="membership" element={<CreatorMembership />} />
+    <Route path="shop" element={<CreatorShop />} />
+    <Route path="shop/:itemId" element={<CreatorShopItem />} />
+    <Route path="checkout" element={<CreatorCheckout />} />
+  </>
+);
 
 const App = () => {
   const { isDark } = useThemeStore();
@@ -44,32 +57,15 @@ const App = () => {
 
   return (
     <Routes>
-      {/* =========================
-          PUBLIC ROUTES
-      ========================== */}
+      {/* PUBLIC ROUTES — must come before /:username */}
       <Route path="/" element={<Home />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />
-<Route path="/explore-creator" element={<ExploreCreator />} />
-      {/* =========================
-          PUBLIC CREATOR PAGE
-          Example:
-          /pranish
-          /ramsharma
-          /@pranish
-      ========================== */}
-      <Route element={<PublicCreatorLayout />}>
-        <Route path="/@:username" element={<CreatorProfile />} />
-        <Route path="/:username" element={<CreatorProfile />} />
-      </Route>
-      <Route element={<Layout />}>
-        
-      </Route>
-      {/* =========================
-          PROTECTED ROUTES
-      ========================== */}
+      <Route path="/explore-creator" element={<ExploreCreator />} />
+
+      {/* PROTECTED ROUTES — before /:username */}
       <Route
         path="/onboarding"
         element={
@@ -78,7 +74,6 @@ const App = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/payment-setup"
         element={
@@ -87,7 +82,6 @@ const App = () => {
           </ProtectedRoute>
         }
       />
-
       <Route
         path="/dashboard"
         element={
@@ -97,9 +91,16 @@ const App = () => {
         }
       />
 
-      {/* =========================
-          404 FALLBACK
-      ========================== */}
+      <Route element={<Layout />} />
+
+      {/* PUBLIC CREATOR PAGES — /username and /@username (catch-all username) */}
+      <Route path="/@:username" element={<PublicCreatorLayout />}>
+        {creatorNestedRoutes}
+      </Route>
+      <Route path="/:username" element={<PublicCreatorLayout />}>
+        {creatorNestedRoutes}
+      </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
