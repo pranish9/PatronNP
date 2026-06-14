@@ -10,6 +10,8 @@ import {
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const username = localStorage.getItem("username");
+  
 
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -21,7 +23,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Home', icon: Home, path: '/dashboard' },
-    { name: 'View page', icon: LayoutDashboard, path: '/view-page' },
+    { name: 'View page', icon: LayoutDashboard, path: `/${username}` },
     { name: 'Explore creators', icon: Search, path: '/explore-creator' },
   ];
 

@@ -43,7 +43,7 @@ const Navbar = ({ username, onLogout }) => {
   const handleShare = async () => {
     const url = `${window.location.origin}/${username}`;
     if (navigator.share) {
-      await navigator.share({ title: `@${username}`, url });
+      await navigator.share({ title: `${username}`, url });
     } else {
       await navigator.clipboard.writeText(url);
       alert("Link copied to clipboard!");
@@ -62,7 +62,7 @@ const Navbar = ({ username, onLogout }) => {
   ];
 
   const isActive = (to, exact) => {
-    if (exact) return location.pathname === to || location.pathname === `/@${username}`;
+    if (exact) return location.pathname === to || location.pathname === `/${username}`;
     return location.pathname.startsWith(to);
   };
 
@@ -75,7 +75,7 @@ const Navbar = ({ username, onLogout }) => {
             <Coffee size={16} className="text-white" />
           </div>
           <span className="font-bold text-sm sm:text-base truncate max-w-[100px] sm:max-w-none">
-            @{username}
+            {username}
           </span>
         </Link>
 

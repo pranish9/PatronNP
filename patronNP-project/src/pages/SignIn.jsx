@@ -25,10 +25,16 @@ const SignIn = () => {
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     const user = localStorage.getItem("user");
+    if (!token) return;
 
-    if (token) {
-      navigate("/onboarding");
-    }
+  const onboardingCompleted =
+    localStorage.getItem("onboardingCompleted");
+
+  if (onboardingCompleted === "true") {
+    navigate("/dashboard", { replace: true });
+  } else {
+    navigate("/onboarding");
+  }
   }, [navigate]);
 
 
@@ -63,7 +69,10 @@ const googleLogin = useGoogleLogin({
 
       localStorage.setItem("accessToken", data.token);
       localStorage.setItem("user", JSON.stringify(data));
-      localStorage.setItem("onboardingCompleted", data.onboardingCompleted);
+      localStorage.setItem("username", data.username);
+      localStorage.setItem(
+        "onboardingCompleted",
+        String(data.onboardingCompleted));
       
       toast.success("Logged in successfully with Google");
       if (data.onboardingCompleted) {
@@ -147,17 +156,25 @@ const googleLogin = useGoogleLogin({
 
       localStorage.setItem("accessToken", res.data.token);
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            id: res.data.id,
-            username: res.data.username,
-            email: res.data.email,
-            role: res.data.role,
-          })
-        );
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: res.data.id,
+          username: res.data.username,
+          email: res.data.email,
+          role: res.data.role,
+        })
+      );
 
-        localStorage.setItem("onboardingCompleted", res.data.onboardingCompleted);
+      localStorage.setItem(
+        "username",
+        res.data.username
+      );
+
+      localStorage.setItem(
+        "onboardingCompleted",
+        String(res.data.onboardingCompleted)
+      );
 
         if (res.data.onboardingCompleted) {
           navigate("/dashboard");

@@ -3,9 +3,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { useEffect } from "react";
 
 const OnboardingProfile = () => {
   const navigate = useNavigate();
+  
 
   const [loading, setLoading] = useState(false);
 
@@ -123,6 +125,15 @@ const OnboardingProfile = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const onboardingCompleted =
+      localStorage.getItem("onboardingCompleted");
+  
+    if (onboardingCompleted === "true") {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-8">
