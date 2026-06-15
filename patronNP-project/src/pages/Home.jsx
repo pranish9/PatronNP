@@ -12,16 +12,14 @@ import Footer from '../components/landingpage/Footer';
 import FAQ from '../components/landingpage/FQA';
 
 const Home = () => {
-  // 1. Initialized to false so it does not load on page start
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // 2. Use callbacks for clean prop passing
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Navbar now properly triggers the modal open */}
+
       <Navbar onSearchOpen={openSearch} />
       
       <main>

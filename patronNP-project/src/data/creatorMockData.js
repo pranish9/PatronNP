@@ -4,10 +4,13 @@ export const getCreatorPosts = (username) => [
     title: "Welcome to my creator page!",
     date: "2026-05-28",
     category: "public",
+    type: "text",
     excerpt: "Thanks for stopping by — here's what I'm working on this month.",
     content:
       "Thanks for stopping by! I'm building new content every week. Drop a comment and let me know what you'd like to see next.",
+    imageUrl: null,
     audioUrl: null,
+    videoUrl: null,
     likes: 24,
     comments: [
       { id: "c1", user: "supporter1", text: "Love your work!", date: "2026-05-29" },
@@ -18,10 +21,13 @@ export const getCreatorPosts = (username) => [
     title: "Behind the scenes — studio session",
     date: "2026-06-02",
     category: "membership",
+    type: "audio",
     excerpt: "Exclusive audio from my latest recording session.",
     content:
       "Members-only post! Listen to the raw audio from my latest session and read my production notes.",
+    imageUrl: null,
     audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    videoUrl: null,
     likes: 18,
     comments: [],
   },
@@ -30,14 +36,17 @@ export const getCreatorPosts = (username) => [
     title: "Monthly Q&A recap",
     date: "2026-06-08",
     category: "public",
+    type: "photo",
     excerpt: "Answers to your top questions from this month's live stream.",
     content:
       "We covered gear, workflow, and how I plan content. Full recap below for everyone.",
+    imageUrl:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=60",
     audioUrl: null,
+    videoUrl: null,
     likes: 31,
     comments: [
       { id: "c2", user: "fan42", text: "Great Q&A!", date: "2026-06-09" },
-      { id: "c3", user: "artist_nepal", text: "When is the next stream?", date: "2026-06-09" },
     ],
   },
 ];
@@ -98,6 +107,39 @@ export const getCreatorShopItems = (username) => [
     purchasedCount: 34,
   },
 ];
+
+export const getRecentSupporters = (username) => [
+  {
+    id: "s1",
+    name: "Anisha K.",
+    handle: "anisha_k",
+    amount: 300,
+    message: "Love your content! Keep going",
+    timestamp: "2026-06-10T14:30:00",
+    isPrivate: false,
+  },
+  {
+    id: "s2",
+    name: "Rohan",
+    handle: "rohan_dev",
+    amount: 500,
+    message: "Bought you a tea — well deserved!",
+    timestamp: "2026-06-09T09:15:00",
+    isPrivate: false,
+  },
+  {
+    id: "s3",
+    name: "Private Supporter",
+    handle: null,
+    amount: 200,
+    message: "Thank you for everything",
+    timestamp: "2026-06-08T18:00:00",
+    isPrivate: true,
+  },
+];
+
+export const getPublicSupporters = (username) =>
+  getRecentSupporters(username).filter((s) => !s.isPrivate);
 
 export const getPostById = (username, postId) =>
   getCreatorPosts(username).find((p) => p.id === postId);

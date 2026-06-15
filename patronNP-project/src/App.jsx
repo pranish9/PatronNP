@@ -23,6 +23,8 @@ import CreatorMembership from "./pages/CreatorPage/CreatorMembership";
 import CreatorShop from "./pages/CreatorPage/CreatorShop";
 import CreatorShopItem from "./pages/CreatorPage/CreatorShopItem";
 import CreatorCheckout from "./pages/CreatorPage/CreatorCheckout";
+import PaymentSuccess from "./pages/CreatorPage/PaymentSuccess";
+import PaymentFailure from "./pages/CreatorPage/PaymentFailure";
 
 // Layouts
 import PublicCreatorLayout from "./components/PublicCreatorLayout/PublicCreatorLayout";
@@ -41,6 +43,8 @@ const creatorNestedRoutes = (
     <Route path="shop" element={<CreatorShop />} />
     <Route path="shop/:itemId" element={<CreatorShopItem />} />
     <Route path="checkout" element={<CreatorCheckout />} />
+    <Route path="checkout/success" element={<PaymentSuccess />} />
+    <Route path="checkout/failure" element={<PaymentFailure />} />
   </>
 );
 

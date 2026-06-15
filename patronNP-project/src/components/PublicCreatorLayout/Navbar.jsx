@@ -5,13 +5,18 @@ import {
   Share2,
   LogOut,
   X,
-  Coffee,
   LayoutDashboard,
   FileText,
   Crown,
   ShoppingBag,
+  Home,
+  Pencil,
+  Users,
 } from "lucide-react";
 import { getAuthUser } from "../../utils/auth";
+import { useCreatorPage } from "../../context/CreatorPageContext";
+import SupportButton from "../creatorLayout/RightSidebar";
+import CreateMenu from "./CreateMenu";
 
 const Navbar = ({ username, onLogout }) => {
   const location = useLocation();
@@ -20,6 +25,13 @@ const Navbar = ({ username, onLogout }) => {
   const dropdownRef = useRef(null);
   const authUser = getAuthUser();
   const token = localStorage.getItem("accessToken");
+
+  const {
+    displayCreator,
+    loading,
+    isOwner,
+    setEditModalOpen,
+  } = useCreatorPage();
 
   let userState = "visitor";
   if (token && authUser) {
@@ -43,54 +55,77 @@ const Navbar = ({ username, onLogout }) => {
   const handleShare = async () => {
     const url = `${window.location.origin}/${username}`;
     if (navigator.share) {
-      await navigator.share({ title: `${username}`, url });
+      await navigator.share({ title: displayCreator?.displayName || username, url });
     } else {
       await navigator.clipboard.writeText(url);
-      alert("Link copied to clipboard!");
+      alert("Link copied!");
     }
   };
 
   const base = `/${username}`;
+  const avatarUrl =
+    displayCreator?.profilePictureUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      displayCreator?.displayName || username
+    )}&background=16a34a&color=fff&size=64`;
 
   const navLinks = [
-    { to: base, label: "Home", icon: Coffee, show: true, exact: true },
+    { to: base, label: "Home", icon: Home, show: true, exact: true },
     { to: `${base}/posts`, label: "Posts", icon: FileText, show: true },
     { to: `${base}/membership`, label: "Membership", icon: Crown, show: true },
     { to: `${base}/shop`, label: "Shop", icon: ShoppingBag, show: true },
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: userState === "creator" },
-    { to: "/explore-creator", label: "Explore", icon: null, show: userState !== "creator" },
+    {
+      to: "/dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      show: userState === "creator",
+    },
   ];
 
   const isActive = (to, exact) => {
-    if (exact) return location.pathname === to || location.pathname === `/${username}`;
+    if (exact)
+      return location.pathname === to || location.pathname === `/@${username}`;
     return location.pathname.startsWith(to);
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-slate-200/80">
-      <div className="max-w-6xl mx-auto h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 gap-2">
-        {/* Left */}
-        <Link to={base} className="flex items-center gap-2 min-w-0 shrink">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center shrink-0">
-            <Coffee size={16} className="text-white" />
+    <nav className="sticky top-0 z-50 w-full bg-patron-white/95 backdrop-blur-md border-b border-patron-gray-200">
+      <div className="max-w-6xl mx-auto min-h-14 sm:min-h-16 flex flex-wrap sm:flex-nowrap items-center justify-between px-3 sm:px-6 gap-2 py-2 sm:py-0">
+        {/* Left — creator identity from backend */}
+        <Link
+          to={base}
+          className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 sm:flex-none max-w-[55%] sm:max-w-none"
+        >
+          {!loading && (
+            <img
+              src={avatarUrl}
+              alt=""
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover ring-2 ring-patron-green-200 shrink-0"
+            />
+          )}
+          <div className="min-w-0">
+            <p className="font-bold text-sm sm:text-base text-patron-black truncate">
+              {loading ? username : displayCreator?.displayName || username}
+            </p>
+            <p className="text-[10px] sm:text-xs text-patron-gray-500 flex items-center gap-1 truncate">
+              <Users size={10} />
+              {displayCreator?.supporterCount ?? 0} supporters
+            </p>
           </div>
-          <span className="font-bold text-sm sm:text-base truncate max-w-[100px] sm:max-w-none">
-            {username}
-          </span>
         </Link>
 
-        {/* Center — tablet & desktop */}
-        <div className="hidden lg:flex items-center gap-1">
+        {/* Center — desktop */}
+        <div className="hidden lg:flex items-center gap-1 order-3 lg:order-2">
           {navLinks
             .filter((l) => l.show)
             .map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                   isActive(link.to, link.exact)
-                    ? "bg-violet-100 text-violet-700"
-                    : "text-slate-600 hover:text-violet-700 hover:bg-slate-50"
+                    ? "bg-patron-green-100 text-patron-green-800"
+                    : "text-patron-gray-600 hover:text-patron-green-700 hover:bg-patron-gray-50"
                 }`}
               >
                 {link.label}
@@ -98,47 +133,30 @@ const Navbar = ({ username, onLogout }) => {
             ))}
         </div>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right */}
+        <div className="flex items-center gap-1.5 sm:gap-2 order-2 sm:order-3 shrink-0">
           {userState === "visitor" && (
             <Link
               to="/signin"
-              className="hidden sm:inline-flex px-3 sm:px-4 py-1.5 sm:py-2 bg-slate-900 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-slate-800 transition-colors"
+              className="hidden xs:inline-flex px-3 py-1.5 bg-patron-black text-patron-white text-xs sm:text-sm font-medium rounded-full hover:bg-patron-gray-800"
             >
               Log in
             </Link>
           )}
 
-          {userState === "logged-in" && (
-            <>
-              <button
-                onClick={handleShare}
-                className="hidden sm:flex items-center gap-1 border border-slate-200 px-2.5 py-1.5 rounded-full text-xs sm:text-sm hover:bg-slate-50"
-              >
-                <Share2 size={14} />
-                Share
-              </button>
-              <Link
-                to={`${base}/membership`}
-                className="px-2.5 sm:px-4 py-1.5 sm:py-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs sm:text-sm font-medium rounded-full hover:opacity-90"
-              >
-                Support
-              </Link>
-            </>
-          )}
-
           {userState === "creator" && (
             <>
               <button
-                onClick={handleShare}
-                className="hidden sm:flex items-center gap-1 border border-slate-200 px-2.5 py-1.5 rounded-full text-xs sm:text-sm hover:bg-slate-50"
+                onClick={() => setEditModalOpen(true)}
+                className="hidden sm:flex items-center gap-1 border border-patron-gray-200 px-2.5 py-1.5 rounded-full text-xs sm:text-sm hover:bg-patron-gray-50 text-patron-gray-700"
               >
-                <Share2 size={14} />
-                Share
+                <Pencil size={14} />
+                Edit page
               </button>
+              <CreateMenu username={username} />
               <Link
                 to="/dashboard"
-                className="hidden md:flex items-center gap-1 px-2.5 py-1.5 bg-violet-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-violet-700"
+                className="hidden md:flex items-center gap-1 px-2.5 py-1.5 bg-patron-green-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-patron-green-700"
               >
                 <LayoutDashboard size={14} />
                 Dashboard
@@ -146,9 +164,30 @@ const Navbar = ({ username, onLogout }) => {
             </>
           )}
 
+          {(userState === "logged-in" || userState === "visitor") && (
+            <>
+              <button
+                onClick={handleShare}
+                className="hidden sm:flex items-center gap-1 border border-patron-gray-200 px-2.5 py-1.5 rounded-full text-xs hover:bg-patron-gray-50"
+              >
+                <Share2 size={14} />
+              </button>
+              <SupportButton size="sm" />
+            </>
+          )}
+
+          {userState === "creator" && (
+            <button
+              onClick={handleShare}
+              className="hidden sm:flex items-center gap-1 border border-patron-gray-200 px-2.5 py-1.5 rounded-full text-xs hover:bg-patron-gray-50"
+            >
+              <Share2 size={14} />
+            </button>
+          )}
+
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="lg:hidden p-2 rounded-lg hover:bg-slate-100"
+            className="lg:hidden p-2 rounded-lg hover:bg-patron-gray-100"
             aria-label="Menu"
           >
             {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
@@ -157,12 +196,23 @@ const Navbar = ({ username, onLogout }) => {
           <div className="relative hidden lg:block" ref={dropdownRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 rounded-lg hover:bg-slate-100"
+              className="p-2 rounded-lg hover:bg-patron-gray-100"
             >
               <Menu size={20} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-52 bg-white shadow-xl border border-slate-200 rounded-xl py-1">
+              <div className="absolute right-0 mt-2 w-52 bg-patron-white shadow-xl border border-patron-gray-200 rounded-xl py-1">
+                {userState === "creator" && (
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setEditModalOpen(true);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-patron-gray-50"
+                  >
+                    Edit page
+                  </button>
+                )}
                 {userState !== "visitor" ? (
                   <button
                     onClick={() => {
@@ -177,7 +227,7 @@ const Navbar = ({ username, onLogout }) => {
                 ) : (
                   <Link
                     to="/signin"
-                    className="block px-4 py-2.5 text-sm hover:bg-slate-50"
+                    className="block px-4 py-2.5 text-sm hover:bg-patron-gray-50"
                     onClick={() => setMenuOpen(false)}
                   >
                     Log in
@@ -189,12 +239,10 @@ const Navbar = ({ username, onLogout }) => {
         </div>
       </div>
 
-      {/* Mobile / tablet nav */}
       {mobileNavOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-3 py-2 grid grid-cols-2 sm:grid-cols-4 gap-1">
+        <div className="lg:hidden border-t border-patron-gray-200 bg-patron-white px-3 py-2 grid grid-cols-2 sm:grid-cols-4 gap-1">
           {navLinks
-            .filter((l) => l.show && l.to.startsWith("/"))
-            .slice(0, 4)
+            .filter((l) => l.show && !l.to.startsWith("/dashboard"))
             .map((link) => (
               <Link
                 key={link.to}
@@ -202,8 +250,8 @@ const Navbar = ({ username, onLogout }) => {
                 onClick={() => setMobileNavOpen(false)}
                 className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium ${
                   isActive(link.to, link.exact)
-                    ? "bg-violet-100 text-violet-700"
-                    : "text-slate-600"
+                    ? "bg-patron-green-100 text-patron-green-800"
+                    : "text-patron-gray-600"
                 }`}
               >
                 {link.icon && <link.icon size={18} />}
@@ -211,11 +259,24 @@ const Navbar = ({ username, onLogout }) => {
               </Link>
             ))}
 
-          <div className="col-span-2 sm:col-span-4 border-t border-slate-100 pt-2 mt-1 flex gap-2">
+          {userState === "creator" && (
+            <button
+              onClick={() => {
+                setMobileNavOpen(false);
+                setEditModalOpen(true);
+              }}
+              className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium text-patron-gray-600"
+            >
+              <Pencil size={18} />
+              Edit page
+            </button>
+          )}
+
+          <div className="col-span-2 sm:col-span-4 border-t border-patron-gray-100 pt-2 mt-1 flex gap-2">
             {userState === "visitor" && (
               <Link
                 to="/signin"
-                className="flex-1 text-center py-2 text-sm font-medium text-violet-600"
+                className="flex-1 text-center py-2 text-sm font-medium text-patron-green-700"
                 onClick={() => setMobileNavOpen(false)}
               >
                 Log in

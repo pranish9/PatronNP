@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { Toaster } from 'react-hot-toast'
 import './index.css'
+import './i18n/i18n.js'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 

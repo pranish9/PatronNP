@@ -1,6 +1,7 @@
 import React from 'react';
 import { Search, Heart, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import heroImage from '/hero.webp';
 
 const Hero = ({ onSearchOpen }) => {
   return (
@@ -9,12 +10,8 @@ const Hero = ({ onSearchOpen }) => {
         
         {/* Left Side: Content */}
         <div className="text-center md:text-left">
-          <span className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs md:text-sm font-medium mb-6">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            Made for Nepali Creators
-          </span>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 leading-[1.1] mb-6">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-[1.1] mb-6">
             Support Creators.<br />
             <span className="text-emerald-500">Earn Online.</span><br />
             Grow Your Community.
@@ -63,7 +60,7 @@ const Hero = ({ onSearchOpen }) => {
         {/* Right Side: Online Illustration */}
         <div className="relative hidden md:block">
           <img 
-            src="https://img.freepik.com/free-vector/creative-team-working-project_23-2148784797.jpg" 
+            src="/hero.webp" 
             alt="Creators working" 
             className="rounded-3xl shadow-2xl w-full object-cover"
           />

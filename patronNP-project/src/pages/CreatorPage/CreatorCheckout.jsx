@@ -64,7 +64,7 @@ const CreatorCheckout = () => {
         `Redirecting to ${paymentMethod === "ESEWA" ? "eSewa" : "Khalti"} for Rs ${total}...`
       );
       clearCart();
-      navigate(`/${username}/shop`);
+      navigate(`/${username}/checkout/success`);
     } catch {
       toast.error("Payment failed");
     } finally {

@@ -1,28 +1,34 @@
-export const Button = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
+export const Button = ({
+  children,
+  variant = "primary",
+  size = "md",
   isLoading = false,
   disabled = false,
-  className = '',
-  ...props 
+  className = "",
+  ...props
 }) => {
-  const baseClass = 'font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
-  
+  const baseClass =
+    "font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed";
+
   const variants = {
-    primary: 'bg-purple-600 hover:bg-purple-700 text-white',
-    secondary: 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-slate-100',
-    outline: 'border-2 border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-slate-900',
-    ghost: 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800',
-    danger: 'bg-red-600 hover:bg-red-700 text-white',
-  }
+    primary:
+      "bg-patron-green-600 hover:bg-patron-green-700 text-white shadow-sm",
+    secondary:
+      "bg-patron-gray-100 hover:bg-patron-gray-200 text-patron-black",
+    outline:
+      "border-2 border-patron-green-600 text-patron-green-700 hover:bg-patron-green-50",
+    accent:
+      "bg-patron-orange-500 hover:bg-patron-orange-600 text-white shadow-sm",
+    ghost: "text-patron-gray-600 hover:bg-patron-gray-100",
+    danger: "bg-red-600 hover:bg-red-700 text-white",
+  };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-    full: 'w-full px-4 py-2.5 text-base',
-  }
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-base",
+    lg: "px-6 py-3 text-lg",
+    full: "w-full px-4 py-2.5 text-base",
+  };
 
   return (
     <button
@@ -39,7 +45,7 @@ export const Button = ({
         children
       )}
     </button>
-  )
-}
+  );
+};
 
-export default Button
+export default Button;

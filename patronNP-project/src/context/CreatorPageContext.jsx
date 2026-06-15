@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import userService from "../services/userService";
 import apiClient from "../services/apiClient";
@@ -11,14 +11,23 @@ export const CreatorPageProvider = ({ children }) => {
   const username = rawUsername?.replace(/^@/, "") || "";
 
   const [creator, setCreator] = useState(null);
+  const [profileOverrides, setProfileOverrides] = useState({});
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   const authUser = getAuthUser();
   const loggedIn = isAuthenticated();
   const isOwner =
     loggedIn &&
     authUser?.username?.toLowerCase() === username?.toLowerCase();
+
+  const displayCreator = creator ? { ...creator, ...profileOverrides } : null;
+
+  const updateProfileDisplay = useCallback((data) => {
+    setProfileOverrides((prev) => ({ ...prev, ...data }));
+  }, []);
 
   useEffect(() => {
     if (!username) return;
@@ -36,6 +45,7 @@ export const CreatorPageProvider = ({ children }) => {
           data = res.data;
         }
         setCreator(data);
+        setProfileOverrides({});
       } catch {
         setNotFound(true);
         setCreator(null);
@@ -49,7 +59,21 @@ export const CreatorPageProvider = ({ children }) => {
 
   return (
     <CreatorPageContext.Provider
-      value={{ username, creator, loading, notFound, isOwner, loggedIn, authUser }}
+      value={{
+        username,
+        creator,
+        displayCreator,
+        loading,
+        notFound,
+        isOwner,
+        loggedIn,
+        authUser,
+        updateProfileDisplay,
+        supportModalOpen,
+        setSupportModalOpen,
+        editModalOpen,
+        setEditModalOpen,
+      }}
     >
       {children}
     </CreatorPageContext.Provider>
@@ -58,7 +82,8 @@ export const CreatorPageProvider = ({ children }) => {
 
 export const useCreatorPage = () => {
   const ctx = useContext(CreatorPageContext);
-  if (!ctx) throw new Error("useCreatorPage must be used within CreatorPageProvider");
+  if (!ctx)
+    throw new Error("useCreatorPage must be used within CreatorPageProvider");
   return ctx;
 };
 
