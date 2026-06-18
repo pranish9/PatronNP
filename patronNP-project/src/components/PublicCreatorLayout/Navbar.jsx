@@ -74,12 +74,6 @@ const Navbar = ({ username, onLogout }) => {
     { to: `${base}/posts`, label: "Posts", icon: FileText, show: true },
     { to: `${base}/membership`, label: "Membership", icon: Crown, show: true },
     { to: `${base}/shop`, label: "Shop", icon: ShoppingBag, show: true },
-    {
-      to: "/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      show: userState === "creator",
-    },
   ];
 
   const isActive = (to, exact) => {

@@ -2,7 +2,12 @@ import apiClient from './apiClient';
 
 export const userService = {
   getProfile: () => apiClient.get('/users/profile'),
-  
+  updateCreatorPage: (formData) =>
+  apiClient.put("/creator/page", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  }),
   updateProfile: (data) =>
     apiClient.put('/users/profile', data),
   
@@ -21,16 +26,16 @@ export const userService = {
   },
   
   getCreatorPage: (username) =>
-    apiClient.get(`/creators/profile/${username}`),
+    apiClient.get(`/creator/profile/${username}`),
   
   getCreatorStats: () =>
-    apiClient.get('/creators/stats'),
+    apiClient.get('/creator/stats'),
   
   getSupporters: () =>
-    apiClient.get('/creators/supporters'),
+    apiClient.get('/creator/supporters'),
   
   getAnalytics: (range = '30d') =>
-    apiClient.get(`/creators/analytics?range=${range}`),
+    apiClient.get(`/creator/analytics?range=${range}`),
 };
 
 export default userService;

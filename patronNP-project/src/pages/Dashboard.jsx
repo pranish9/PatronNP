@@ -28,10 +28,10 @@ export const Dashboard = () => {
 
   // Mock data tailored for Chart.js implementation
   const stats = {
-    totalEarnings: 0,
-    supportersCount: 0,
-    membershipCount: 0,
-    shopCount: 0,
+    totalEarnings: 1000,
+    supportersCount: 10,
+    membershipCount: 100,
+    shopCount: 10,
   }
 
   // Chart configs mimicking clean financial metrics
@@ -41,7 +41,7 @@ export const Dashboard = () => {
       {
         fill: true,
         label: 'Earnings',
-        data: [0, 0, 0, 0, 0, 0], // Matches the zero state shown in the image safely
+        data: [100, 30, 20, 93, 5, 100], // Matches the zero state shown in the image safely
         borderColor: '#10b981', // Emerald green brand color
         backgroundColor: 'rgba(16, 185, 129, 0.05)',
         tension: 0.4,
@@ -56,7 +56,7 @@ export const Dashboard = () => {
       legend: { display: false },
     },
     scales: {
-      y: { min: 0, max: 10, ticks: { stepSize: 2 } },
+      y: { min: 0, max: 500, ticks: { stepSize: 2 } },
       x: { grid: { display: false } }
     }
   }
@@ -188,7 +188,7 @@ export const Dashboard = () => {
               </Button>
               <Button variant="secondary" size="sm" className="text-xs py-1.5 flex items-center gap-1.5" onClick={handleLogout}>
                 <LogOut size={14} />
-                {t('common.logout')}
+                {t('logout')}
               </Button>
             </div>
           </div>

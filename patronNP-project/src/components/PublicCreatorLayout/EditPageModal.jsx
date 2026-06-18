@@ -12,7 +12,12 @@ const PANEL_ID = "edit-page-modal-panel";
 
 const EditPageModal = ({ isOpen, onClose }) => {
   const { displayCreator, updateProfileDisplay } = useCreatorPage();
+
   const [saving, setSaving] = useState(false);
+
+  const [profileFile, setProfileFile] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
+
   const profileInputRef = useRef(null);
   const coverInputRef = useRef(null);
 
@@ -33,13 +38,11 @@ const EditPageModal = ({ isOpen, onClose }) => {
   useEffect(() => {
     if (displayCreator && isOpen) {
       setForm({
-        displayName: displayCreator.displayName || "",
-        creatingWhat: displayCreator.tagline || displayCreator.creatingWhat || "",
-        aboutMe: displayCreator.bio || displayCreator.aboutMe || "",
-        pageDescription:
-          displayCreator.pageDescription || displayCreator.welcomeMessage || "",
-        featuredVideoUrl:
-          displayCreator.featuredVideoUrl || displayCreator.introVideoUrl || "",
+  displayName: displayCreator.fullName ||displayCreator.displayName || "",
+        creatingWhat: displayCreator.whycreating || "",
+        aboutMe: displayCreator.bio || "",
+        pageDescription: displayCreator.pageDescription || "",
+        featuredVideoUrl: displayCreator.featuredVideoUrl || "",
         instagram: displayCreator.instagram || "",
         twitter: displayCreator.twitter || "",
         facebook: displayCreator.facebook || "",
@@ -56,39 +59,60 @@ const EditPageModal = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const handleFile = (file, field) => {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setForm((prev) => ({ ...prev, [field]: url }));
-  };
+      if (!file) return;
 
-  const handleSave = async () => {
-    setSaving(true);
-    const payload = {
-      displayName: form.displayName,
-      tagline: form.creatingWhat,
-      bio: form.aboutMe,
-      welcomeMessage: form.pageDescription,
-      featuredVideoUrl: form.featuredVideoUrl,
-      introVideoUrl: form.featuredVideoUrl,
-      pageDescription: form.pageDescription,
-      instagram: form.instagram,
-      twitter: form.twitter,
-      facebook: form.facebook,
-      youtube: form.youtube,
-      profilePictureUrl: form.profilePreview || displayCreator?.profilePictureUrl,
-      coverImageUrl: form.coverPreview || displayCreator?.coverImageUrl,
+      const previewUrl = URL.createObjectURL(file);
+
+      setForm((prev) => ({
+        ...prev,
+        [field]: previewUrl,
+      }));
+
+      if (field === "profilePreview") {
+        setProfileFile(file);
+      }
+
+      if (field === "coverPreview") {
+        setCoverFile(file);
+      }
     };
 
-    try {
-      await userService.updateProfile(payload);
-      updateProfileDisplay(payload);
-      toast.success("Page updated successfully!");
-    } catch {
-      updateProfileDisplay(payload);
-      toast.success("Changes saved (preview mode)");
+  const handleSave = async () => {
+  setSaving(true);
+
+  try {
+    const formData = new FormData();
+
+    formData.append("displayName", form.displayName);
+    formData.append("whycreating", form.creatingWhat);
+    formData.append("bio", form.aboutMe);
+    formData.append("pageDescription", form.pageDescription);
+    formData.append("featuredVideoUrl", form.featuredVideoUrl);
+
+    formData.append("instagram", form.instagram);
+    formData.append("twitter", form.twitter);
+    formData.append("facebook", form.facebook);
+    formData.append("youtube", form.youtube);
+
+      if (profileFile) {
+        formData.append("profilePicture", profileFile);
+      }
+
+      if (coverFile) {
+        formData.append("coverImage", coverFile);
+      }
+
+      const response = await userService.updateCreatorPage(formData);
+
+      updateProfileDisplay(response.data);
+
+      toast.success("Page updated successfully");
+      onClose();
+    } catch (error) {
+      console.error("Update failed:", error);
+      toast.error("Failed to update page");
     } finally {
       setSaving(false);
-      onClose();
     }
   };
 
@@ -216,19 +240,18 @@ const EditPageModal = ({ isOpen, onClose }) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
-              { key: "instagram", label: "Instagram" },
-              { key: "twitter", label: "Twitter / X" },
-              { key: "facebook", label: "Facebook" },
-              { key: "youtube", label: "YouTube" },
-            ].map(({ key, label }) => (
+              { key: "instagram", label: "Instagram", prefix: "@" },
+              { key: "twitter", label: "Twitter / X", prefix: "@" },
+              { key: "facebook", label: "Facebook", prefix: "@" },
+              { key: "youtube", label: "YouTube", prefix: "@" },
+            ].map(({ key, label, prefix }) => (
               <div key={key}>
                 <label className="text-xs font-medium text-patron-gray-500">{label}</label>
                 <input
                   value={form[key]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                   className={`${fieldClass} mt-1`}
-                  placeholder={`@${key}`}
-                />
+                  placeholder={prefix ? `${prefix}${key}` : label} />
               </div>
             ))}
           </div>

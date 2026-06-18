@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Heart,
-  Users,
   Play,
   FileText,
   Headphones,
   Image as ImageIcon,
   ExternalLink,
   Pencil,
+  Coffee,
+  X,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -37,8 +38,11 @@ const CreatorProfile = () => {
   const [showVideo, setShowVideo] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [customAmount, setCustomAmount] = useState("");
+  const [supporterName, setSupporterName] = useState("");
+  const [supportMessage, setSupportMessage] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("ESEWA");
   const [donating, setDonating] = useState(false);
+  const [paymentPopupOpen, setPaymentPopupOpen] = useState(false);
 
   if (loading) {
     return (
@@ -71,7 +75,7 @@ const CreatorProfile = () => {
     return match ? `https://www.youtube.com/embed/${match[1]}` : url;
   };
 
-  const handleDonate = async () => {
+  const handleSupportClick = () => {
     if (!loggedIn) {
       toast.error("Please log in to support");
       return;
@@ -80,12 +84,17 @@ const CreatorProfile = () => {
       toast.error("Minimum amount is NPR 10");
       return;
     }
+    setPaymentPopupOpen(true);
+  };
+
+  const handleConfirmPayment = async () => {
     setDonating(true);
     try {
       await new Promise((r) => setTimeout(r, 1200));
       toast.success(
         `Redirecting to ${paymentMethod === "ESEWA" ? "eSewa" : "Khalti"}...`
       );
+      setPaymentPopupOpen(false);
     } catch {
       toast.error("Payment failed");
     } finally {
@@ -148,10 +157,6 @@ const CreatorProfile = () => {
                   {c.tagline || c.creatingWhat}
                 </p>
               )}
-              <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm text-patron-gray-500 mt-2">
-                <Users size={14} className="text-patron-green-600" />
-                {c.supporterCount ?? 0} supporters
-              </p>
             </div>
             {!isOwner && (
               <div className="pb-2 shrink-0">
@@ -228,46 +233,61 @@ const CreatorProfile = () => {
 
           {/* Recent supporters */}
           <section className="bg-patron-white rounded-2xl border border-patron-gray-200 p-5 sm:p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-patron-black mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-bold text-patron-black mb-1 flex items-center gap-2">
               <Heart className="text-patron-orange-500" size={20} />
               Recent supporters
             </h2>
+            <p className="text-sm text-patron-gray-500 mb-4">
+              {c.supporterCount ?? supporters.length} people have bought{" "}
+              {c.displayName?.split(" ")[0]} a {unitLabel}
+            </p>
             {supporters.length === 0 ? (
-              <p className="text-patron-gray-500 text-sm text-center py-6">
-                Be the first one to support{" "}
-                <span className="font-semibold text-patron-black">{c.displayName}</span>
-              </p>
+              <div className="text-center py-8">
+                <div className="w-12 h-12 rounded-full bg-patron-orange-50 text-patron-orange-500 flex items-center justify-center mx-auto mb-3">
+                  <Coffee size={22} />
+                </div>
+                <p className="text-patron-gray-500 text-sm">
+                  Be the first one to support{" "}
+                  <span className="font-semibold text-patron-black">{c.displayName}</span>
+                </p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {supporters.map((s) => (
-                  <div
-                    key={s.id}
-                    className="flex gap-3 p-3 rounded-xl bg-patron-gray-50 border border-patron-gray-100"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-patron-green-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                      {s.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-sm text-patron-black">
-                          {s.name}
-                        </span>
-                        <span className="text-xs font-bold text-patron-orange-600">
-                          NPR {s.amount}
-                        </span>
+              <div className="divide-y divide-patron-gray-100">
+                {supporters.map((s) => {
+                  const coffeeCount = Math.max(
+                    1,
+                    Math.round((s.amount || unitPrice) / unitPrice)
+                  );
+                  return (
+                    <div key={s.id} className="flex gap-3 py-4 first:pt-0 last:pb-0">
+                      <div className="w-10 h-10 rounded-full bg-patron-orange-50 text-patron-orange-600 flex items-center justify-center shrink-0">
+                        <Coffee size={18} />
                       </div>
-                      <p className="text-sm text-patron-gray-600 line-clamp-2 mt-0.5">
-                        {s.message}
-                      </p>
-                      <p className="text-[10px] text-patron-gray-400 mt-1">
-                        {new Date(s.timestamp).toLocaleDateString("en-NP", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-patron-black">
+                          <span className="font-semibold">{s.name}</span>{" "}
+                          <span className="text-patron-gray-500">
+                            bought {coffeeCount} {coffeeCount === 1 ? unitLabel : `${unitLabel}s`}
+                          </span>
+                        </p>
+                        {s.message && (
+                          <p className="text-sm text-patron-gray-600 mt-1 italic leading-relaxed">
+                            "{s.message}"
+                          </p>
+                        )}
+                        <p className="text-[11px] text-patron-gray-400 mt-1.5">
+                          {new Date(s.timestamp).toLocaleDateString("en-NP", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-patron-orange-600 shrink-0">
+                        NPR {s.amount}
+                      </span>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -324,12 +344,47 @@ const CreatorProfile = () => {
               id="support-section"
               className="bg-patron-white rounded-2xl border border-patron-gray-200 p-5 sm:p-6 shadow-sm sticky top-20"
             >
-              <h2 className="font-bold text-patron-black mb-1">
-                Buy a {unitLabel}
-              </h2>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-8 h-8 rounded-full bg-patron-orange-50 text-patron-orange-500 flex items-center justify-center text-base">
+                  ☕
+                </span>
+                <h2 className="font-bold text-patron-black">
+                  Buy {c.displayName?.split(" ")[0]} a {unitLabel}
+                </h2>
+              </div>
               <p className="text-sm text-patron-gray-500 mb-4">
-                NPR {unitPrice} each · Support {c.displayName?.split(" ")[0]}
+                It's a friendly gesture — each {unitLabel} is NPR {unitPrice}, buy as
+                many as you like.
               </p>
+
+              <div className="flex items-center justify-center gap-4 mb-4 py-3 bg-patron-gray-50 rounded-xl border border-patron-gray-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuantity((q) => Math.max(1, q - 1));
+                    setCustomAmount("");
+                  }}
+                  className="w-8 h-8 rounded-full bg-patron-white border border-patron-gray-200 text-patron-gray-700 font-bold hover:bg-patron-green-100 disabled:opacity-40"
+                  disabled={!!customAmount}
+                >
+                  −
+                </button>
+                <span className="flex items-center gap-1.5 text-lg font-bold text-patron-black tabular-nums">
+                  <span aria-hidden>☕</span>
+                  {customAmount ? "—" : quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuantity((q) => q + 1);
+                    setCustomAmount("");
+                  }}
+                  className="w-8 h-8 rounded-full bg-patron-white border border-patron-gray-200 text-patron-gray-700 font-bold hover:bg-patron-green-100 disabled:opacity-40"
+                  disabled={!!customAmount}
+                >
+                  +
+                </button>
+              </div>
 
               <div className="flex gap-2 mb-3">
                 {[1, 3, 5].map((q) => (
@@ -340,38 +395,48 @@ const CreatorProfile = () => {
                       setQuantity(q);
                       setCustomAmount("");
                     }}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold ${
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold ${
                       quantity === q && !customAmount
                         ? "bg-patron-green-600 text-white"
                         : "bg-patron-gray-100 text-patron-gray-700 hover:bg-patron-green-100"
                     }`}
                   >
-                    {q}
+                    {q} ☕
                   </button>
                 ))}
               </div>
 
               <input
+                type="text"
+                placeholder="Name or @yoursocial (optional)"
+                value={supporterName}
+                onChange={(e) => setSupporterName(e.target.value)}
+                className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+              />
+
+              <textarea
+                placeholder="Say something nice (optional)"
+                value={supportMessage}
+                onChange={(e) => setSupportMessage(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+              />
+
+              <input
                 type="number"
                 min="10"
-                placeholder="Custom NPR"
+                placeholder="Custom NPR amount"
                 value={customAmount}
                 onChange={(e) => setCustomAmount(e.target.value)}
                 className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
               />
 
-              <PaymentMethodPicker
-                value={paymentMethod}
-                onChange={setPaymentMethod}
-              />
-
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 {loggedIn ? (
                   <Button
                     variant="accent"
                     size="full"
-                    onClick={handleDonate}
-                    isLoading={donating}
+                    onClick={handleSupportClick}
                     className="rounded-xl py-3"
                   >
                     Support NPR {totalAmount?.toLocaleString() || "—"}
@@ -409,17 +474,53 @@ const CreatorProfile = () => {
                     : `/${username}`}
                 </span>
               </p>
-              <Button
-                className="mt-4 w-full rounded-xl"
-                onClick={() => setEditModalOpen(true)}
-              >
-                <Pencil size={14} />
-                Edit page
-              </Button>
             </div>
           </aside>
         )}
       </div>
+
+      {/* Payment method popup - opens only after Support is clicked */}
+      {paymentPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-patron-black/50 px-4">
+          <div className="bg-patron-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
+            <button
+              type="button"
+              onClick={() => setPaymentPopupOpen(false)}
+              className="absolute top-4 right-4 text-patron-gray-400 hover:text-patron-gray-700"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 rounded-full bg-patron-green-600 text-white flex items-center justify-center font-bold text-lg mx-auto mb-3">
+                {c.displayName?.charAt(0) || "?"}
+              </div>
+              <h3 className="text-lg font-bold text-patron-black">
+                Support {c.displayName}
+              </h3>
+              <p className="text-sm text-patron-gray-500 mt-1">
+                You'll be charged NPR {totalAmount?.toLocaleString() || "—"}
+              </p>
+            </div>
+
+            <PaymentMethodPicker
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+            />
+
+            <Button
+              variant="accent"
+              size="full"
+              onClick={handleConfirmPayment}
+              isLoading={donating}
+              className="rounded-xl py-3 mt-4 w-full"
+            >
+              Pay NPR {totalAmount?.toLocaleString() || "—"}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
