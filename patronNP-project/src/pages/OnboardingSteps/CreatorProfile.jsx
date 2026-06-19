@@ -43,6 +43,7 @@ const CreatorProfile = () => {
   const [paymentMethod, setPaymentMethod] = useState("ESEWA");
   const [donating, setDonating] = useState(false);
   const [paymentPopupOpen, setPaymentPopupOpen] = useState(false);
+  
 
   if (loading) {
     return (
@@ -141,7 +142,7 @@ const CreatorProfile = () => {
               src={
                 c.profilePictureUrl ||
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  c.displayName || username
+                  c.displayName || username 
                 )}&background=16a34a&color=fff&size=128`
               }
               alt={c.displayName}
@@ -152,9 +153,9 @@ const CreatorProfile = () => {
                 {c.displayName}
               </h1>
               <p className="text-patron-gray-500 text-sm mt-0.5">@{c.username || username}</p>
-              {(c.tagline || c.creatingWhat) && (
+              {(c.tagline || c.whycreating) && (
                 <p className="text-patron-gray-600 text-sm sm:text-base mt-2 max-w-xl">
-                  {c.tagline || c.creatingWhat}
+                  {c.tagline || c.whycreating}
                 </p>
               )}
             </div>

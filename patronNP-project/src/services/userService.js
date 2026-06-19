@@ -26,7 +26,7 @@ export const userService = {
   },
   
   getCreatorPage: (username) =>
-    apiClient.get(`/creator/profile/${username}`),
+    apiClient.get(`/creators/${username}`),
   
   getCreatorStats: () =>
     apiClient.get('/creator/stats'),
