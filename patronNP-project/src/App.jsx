@@ -26,6 +26,10 @@ import CreatorShopItem from "./pages/CreatorPage/CreatorShopItem";
 import CreatorCheckout from "./pages/CreatorPage/CreatorCheckout";
 import PaymentSuccess from "./pages/CreatorPage/PaymentSuccess";
 import PaymentFailure from "./pages/CreatorPage/PaymentFailure";
+import TipPaymentSuccess from "./pages/CreatorPage/TipPaymentSuccess";
+import TipPaymentFailure from "./pages/CreatorPage/TipPaymentFailure";
+import Integrations from "./pages/Integrations";
+import StreamAlertOverlay from "./pages/StreamAlertOverlay";
 
 // Layouts
 import PublicCreatorLayout from "./components/PublicCreatorLayout/PublicCreatorLayout";
@@ -49,6 +53,8 @@ const creatorNestedRoutes = (
     <Route path="checkout" element={<CreatorCheckout />} />
     <Route path="checkout/success" element={<PaymentSuccess />} />
     <Route path="checkout/failure" element={<PaymentFailure />} />
+    <Route path="support/success" element={<TipPaymentSuccess />} />
+    <Route path="support/failure" element={<TipPaymentFailure />} />
   </>
 );
 
@@ -91,6 +97,7 @@ const App = () => {
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />
       <Route path="/explore-creator" element={<ExploreCreator />} />
+      <Route path="/stream-alert/:userKey" element={<StreamAlertOverlay />} />
 
       {/* PROTECTED ROUTES — before /:username */}
       <Route
@@ -114,6 +121,14 @@ const App = () => {
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/integrations"
+        element={
+          <ProtectedRoute>
+            <Integrations />
           </ProtectedRoute>
         }
       />

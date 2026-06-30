@@ -17,15 +17,26 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 
 export const Dashboard = () => {
   const { t } = useLanguage()
-  const { user, logout } = useAuthStore()
+  const { logout } = useAuthStore()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const [transactions, setTransactions] = useState([])
   const [totalEarnings, setTotalEarnings] = useState(0)
   const [loadingTransactions, setLoadingTransactions] = useState(true)
 
+  const username = localStorage.getItem("username") || ""
+  const storedUser = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null")
+    } catch {
+      return null
+    }
+  })()
+  const displayName = storedUser?.username || username || t('creator.creatorPage')
+  const pageUrl = username ? `patronnp.com/${username}` : ""
+
   useEffect(() => {
-    getMyTransactions(0, 10)
+    getMyTransactions(0, 50)
       .then((data) => {
         setTransactions(data.transactions?.content || [])
         setTotalEarnings(data.totalEarnings || 0)
@@ -41,28 +52,47 @@ export const Dashboard = () => {
     navigate("/signin", { replace: true });
   };
 
-  // Mock data tailored for Chart.js implementation
-  const stats = {
-    totalEarnings: 1000,
-    supportersCount: 10,
-    membershipCount: 100,
-    shopCount: 10,
-  }
+  const successfulTransactions = transactions.filter((t) => t.status === "SUCCESS")
 
-  // Chart configs mimicking clean financial metrics
+  // Real category totals, computed from actual successful transactions
+  const stats = successfulTransactions.reduce(
+    (acc, t) => {
+      const category = t.category || "TIP"
+      const amount = t.amount || 0
+      if (category === "SHOP") acc.shopAmount += amount
+      else if (category === "MEMBERSHIP") acc.membershipAmount += amount
+      else acc.supportersAmount += amount
+      return acc
+    },
+    { supportersAmount: 0, membershipAmount: 0, shopAmount: 0 }
+  )
+
+  // Real chart data: daily total of successful earnings, grouped from actual transactions
+  const dailyTotals = successfulTransactions.reduce((acc, t) => {
+    const day = new Date(t.createdAt).toLocaleDateString("en-NP", { month: "short", day: "numeric" })
+    acc[day] = (acc[day] || 0) + (t.amount || 0)
+    return acc
+  }, {})
+
+  const sortedDays = Object.keys(dailyTotals).sort(
+    (a, b) => new Date(a) - new Date(b)
+  )
+
   const chartData = {
-    labels: ['May 15', 'May 20', 'May 25', 'May 30', 'Jun 05', 'Jun 10'],
+    labels: sortedDays,
     datasets: [
       {
         fill: true,
-        label: 'Earnings',
-        data: [100, 30, 20, 93, 5, 100], // Matches the zero state shown in the image safely
+        label: t('creator.earnings'),
+        data: sortedDays.map((d) => dailyTotals[d]),
         borderColor: '#10b981', // Emerald green brand color
         backgroundColor: 'rgba(16, 185, 129, 0.05)',
         tension: 0.4,
       },
     ],
   }
+
+  const chartMax = Math.max(...sortedDays.map((d) => dailyTotals[d]), 100)
 
   const chartOptions = {
     responsive: true,
@@ -71,7 +101,7 @@ export const Dashboard = () => {
       legend: { display: false },
     },
     scales: {
-      y: { min: 0, max: 500, ticks: { stepSize: 2 } },
+      y: { min: 0, max: chartMax * 1.2, ticks: { stepSize: Math.ceil(chartMax / 5) || 1 } },
       x: { grid: { display: false } }
     }
   }
@@ -91,15 +121,15 @@ export const Dashboard = () => {
                   P
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 leading-tight">Hi, PRANISH RAJ TUADHAR</h2>
-                  <p className="text-sm text-gray-400 font-medium">buymeacoffee.com/pranishxgrowth</p>
+                  <h2 className="text-lg font-bold text-gray-900 leading-tight">{t('dashboard.greeting', { name: displayName })}</h2>
+                  {pageUrl && <p className="text-sm text-gray-400 font-medium">{pageUrl}</p>}
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
                 <button className="flex items-center gap-2 bg-[#212121] text-white hover:bg-black text-xs font-semibold px-4 py-2 rounded-full transition-all">
                   <Share2 size={14} />
-                  Share page
+                  {t('dashboard.sharePage')}
                 </button>
               </div>
             </div>
@@ -107,9 +137,9 @@ export const Dashboard = () => {
             {/* Earnings Section & ChartJS Visualizer */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <h3 className="text-2xl font-bold text-gray-900">Earnings</h3>
+                <h3 className="text-2xl font-bold text-gray-900">{t('creator.earnings')}</h3>
                 <span className="text-xs bg-gray-100 text-gray-600 font-semibold px-2.5 py-1 rounded-md border border-gray-200">
-                  Last 30 days
+                  {t('dashboard.last30Days')}
                 </span>
               </div>
 
@@ -117,54 +147,72 @@ export const Dashboard = () => {
                 NPR {totalEarnings.toLocaleString()}
               </div>
 
-              {/* Minimalist Legend Pills */}
+              {/* Minimalist Legend Pills — real category totals from successful transactions */}
               <div className="flex flex-wrap gap-4 text-xs font-medium text-gray-500">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-amber-200"></span> ${stats.supportersCount} Supporters</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-pink-200"></span> ${stats.membershipCount} Membership</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-cyan-200"></span> ${stats.shopCount} Shop</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-amber-200"></span> NPR {stats.supportersAmount.toLocaleString()} {t('dashboard.supportersLabel')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-pink-200"></span> NPR {stats.membershipAmount.toLocaleString()} {t('dashboard.membershipLabel')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-cyan-200"></span> NPR {stats.shopAmount.toLocaleString()} {t('dashboard.shopLabel')}</span>
               </div>
 
-              {/* Dynamic Chart Area */}
+              {/* Dynamic Chart Area — real daily earnings from successful transactions */}
               <div className="h-48 w-full pt-4 border border-dashed border-gray-200 rounded-2xl p-4 bg-gray-50/50">
-                <Line data={chartData} options={chartOptions} />
+                {sortedDays.length > 0 ? (
+                  <Line data={chartData} options={chartOptions} />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-sm text-gray-400">
+                    {t('dashboard.noActivity')}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Recent transactions */}
             {loadingTransactions ? (
-              <div className="py-12 text-center text-gray-400 text-sm">Loading transactions...</div>
+              <div className="py-12 text-center text-gray-400 text-sm">{t('dashboard.loadingTransactions')}</div>
             ) : transactions.length === 0 ? (
               <div className="border border-gray-100 rounded-2xl py-12 text-center bg-white shadow-xs max-w-xl mx-auto">
                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 border border-gray-100">
                   <Heart size={20} />
                 </div>
-                <h4 className="text-base font-bold text-gray-900">You don't have any supporters yet</h4>
-                <p className="text-xs text-gray-400 mt-1">Share your page with your audience to get started.</p>
+                <h4 className="text-base font-bold text-gray-900">{t('dashboard.noSupportersYet')}</h4>
+                <p className="text-xs text-gray-400 mt-1">{t('dashboard.sharePageToStart')}</p>
               </div>
             ) : (
               <div className="border border-gray-100 rounded-2xl bg-white overflow-hidden">
                 <div className="px-5 py-3 border-b border-gray-100">
-                  <h4 className="text-sm font-bold text-gray-900">Recent transactions</h4>
+                  <h4 className="text-sm font-bold text-gray-900">{t('dashboard.recentTransactions')}</h4>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {transactions.map((t) => {
+                  {transactions.slice(0, 10).map((txn) => {
                     const categoryIcon =
-                      t.category === "SHOP" ? (
+                      txn.category === "SHOP" ? (
                         <ShoppingBag size={14} />
-                      ) : t.category === "MEMBERSHIP" ? (
+                      ) : txn.category === "MEMBERSHIP" ? (
                         <Lock size={14} />
                       ) : (
                         <Gift size={14} />
                       )
                     const statusColor =
-                      t.status === "SUCCESS"
+                      txn.status === "SUCCESS"
                         ? "text-emerald-600 bg-emerald-50"
-                        : t.status === "PENDING"
+                        : txn.status === "PENDING"
                         ? "text-amber-600 bg-amber-50"
                         : "text-red-600 bg-red-50"
+                    const statusLabel =
+                      txn.status === "SUCCESS"
+                        ? t('dashboard.statusSuccess')
+                        : txn.status === "PENDING"
+                        ? t('dashboard.statusPending')
+                        : t('dashboard.statusFailed')
+                    const categoryLabel =
+                      txn.category === "SHOP"
+                        ? t('dashboard.categoryShop')
+                        : txn.category === "MEMBERSHIP"
+                        ? t('dashboard.categoryMembership')
+                        : t('dashboard.categoryTip')
                     return (
                       <div
-                        key={t.transactionUuid}
+                        key={txn.transactionUuid}
                         className="flex items-center gap-3 px-5 py-3"
                       >
                         <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 border border-gray-100 shrink-0">
@@ -172,14 +220,14 @@ export const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">
-                            {t.supporterName || "Anonymous"}
-                            {t.message && (
-                              <span className="text-gray-400 font-normal"> — "{t.message}"</span>
+                            {txn.supporterName || t('dashboard.anonymous')}
+                            {txn.message && (
+                              <span className="text-gray-400 font-normal"> — "{txn.message}"</span>
                             )}
                           </p>
                           <p className="text-xs text-gray-400 mt-0.5">
-                            {t.provider} · {t.category || "TIP"} ·{" "}
-                            {new Date(t.createdAt).toLocaleDateString("en-NP", {
+                            {txn.provider} · {categoryLabel} ·{" "}
+                            {new Date(txn.createdAt).toLocaleDateString("en-NP", {
                               month: "short",
                               day: "numeric",
                             })}
@@ -187,10 +235,10 @@ export const Dashboard = () => {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-bold text-gray-900">
-                            NPR {t.amount?.toLocaleString()}
+                            NPR {txn.amount?.toLocaleString()}
                           </p>
                           <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}>
-                            {t.status}
+                            {statusLabel}
                           </span>
                         </div>
                       </div>
@@ -204,21 +252,21 @@ export const Dashboard = () => {
 
           {/* Monetization Feature Grid Blocks ("More ways to earn") */}
           <div className="space-y-4">
-            <h3 className="text-lg font-bold text-gray-800">More ways to earn</h3>
-            
+            <h3 className="text-lg font-bold text-gray-800">{t('dashboard.moreWaysToEarn')}</h3>
+
             <div className="grid sm:grid-cols-3 gap-4">
-              
+
               {/* Membership Card */}
               <div className="bg-white border border-gray-100 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md transition-all group">
                 <div className="space-y-3">
                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
                     <Lock size={16} />
                   </div>
-                  <h4 className="font-bold text-gray-900 text-sm">Membership</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed">Monthly membership for your biggest fans and supporters.</p>
+                  <h4 className="font-bold text-gray-900 text-sm">{t('dashboard.membershipLabel')}</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed">{t('dashboard.membershipCardDesc')}</p>
                 </div>
                 <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
-                  <span>View</span>
+                  <span>{t('dashboard.view')}</span>
                   <ChevronRight size={14} className="text-gray-400" />
                 </button>
               </div>
@@ -229,11 +277,11 @@ export const Dashboard = () => {
                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
                     <ShoppingBag size={16} />
                   </div>
-                  <h4 className="font-bold text-gray-900 text-sm">Shop</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed">Introducing Shop, the creative way to sell digital goodies.</p>
+                  <h4 className="font-bold text-gray-900 text-sm">{t('dashboard.shopLabel')}</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed">{t('dashboard.shopCardDesc')}</p>
                 </div>
                 <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
-                  <span>Enable</span>
+                  <span>{t('dashboard.enable')}</span>
                   <ChevronRight size={14} className="text-gray-400" />
                 </button>
               </div>
@@ -244,11 +292,11 @@ export const Dashboard = () => {
                   <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
                     <FileText size={16} />
                   </div>
-                  <h4 className="font-bold text-gray-900 text-sm">Exclusive posts</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed">Publish your best content exclusively for your supporters.</p>
+                  <h4 className="font-bold text-gray-900 text-sm">{t('dashboard.exclusivePosts')}</h4>
+                  <p className="text-xs text-gray-500 leading-relaxed">{t('dashboard.exclusivePostsDesc')}</p>
                 </div>
                 <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
-                  <span>Write a post</span>
+                  <span>{t('dashboard.writeAPost')}</span>
                   <ChevronRight size={14} className="text-gray-400" />
                 </button>
               </div>
@@ -259,7 +307,7 @@ export const Dashboard = () => {
           {/* Traditional Global Action Utilities (Bottom Bar Layout Placement) */}
           <div className="flex justify-between items-center bg-white border border-gray-100 p-4 rounded-2xl">
             <div className="text-xs text-gray-400 font-medium">
-              Logged in as: <span className="text-gray-700 font-semibold">{user?.email || 'Creator'}</span>
+              {t('dashboard.loggedInAs')} <span className="text-gray-700 font-semibold">{storedUser?.email || displayName}</span>
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" className="p-2">
