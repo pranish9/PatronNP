@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import userService from "../services/userService";
 import apiClient from "../services/apiClient";
@@ -25,37 +25,40 @@ export const CreatorPageProvider = ({ children }) => {
 
   const displayCreator = creator ? { ...creator, ...profileOverrides } : null;
 
-  const updateProfileDisplay = useCallback((data) => {
+  const updateProfileDisplay = (data) => {
     setProfileOverrides((prev) => ({ ...prev, ...data }));
-  }, []);
+  };
 
-  useEffect(() => {
-    if (!username) return;
-
-    const fetchCreator = async () => {
-      setLoading(true);
-      setNotFound(false);
+  async function fetchCreator(forUsername, silent) {
+    if (!forUsername) return;
+    if (!silent) setLoading(true);
+    if (!silent) setNotFound(false);
+    try {
+      let data;
       try {
-        let data;
-        try {
-          const res = await userService.getCreatorPage(username);
-          data = res.data;
-        } catch {
-          const res = await apiClient.get(`/creators/${username}`);
-          data = res.data;
-        }
-        setCreator(data);
-        setProfileOverrides({});
+        const res = await userService.getCreatorPage(forUsername);
+        data = res.data;
       } catch {
+        const res = await apiClient.get(`/creators/${forUsername}`);
+        data = res.data;
+      }
+      setCreator(data);
+      setProfileOverrides({});
+    } catch {
+      if (!silent) {
         setNotFound(true);
         setCreator(null);
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }
 
-    fetchCreator();
+  useEffect(() => {
+    fetchCreator(username, false);
   }, [username]);
+
+  const refreshCreator = () => fetchCreator(username, true);
 
   return (
     <CreatorPageContext.Provider
@@ -69,6 +72,7 @@ export const CreatorPageProvider = ({ children }) => {
         loggedIn,
         authUser,
         updateProfileDisplay,
+        refreshCreator,
         supportModalOpen,
         setSupportModalOpen,
         editModalOpen,

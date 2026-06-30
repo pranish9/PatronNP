@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -11,9 +11,14 @@ import {
   Users,
   Sparkles,
   ChevronRight,
+  Loader,
 } from "lucide-react";
 
 import Layout from "../../components/creatorLayout/Layout";
+import { searchCreators, PAGE_SIZE } from "../../services/searchService";
+import { getFollowing } from "../../services/followService";
+import useDebounce from "../../utils/useDebounce";
+import useInfiniteScroll from "../../utils/useInfiniteScroll";
 
 const trendingCreators = [
   {
@@ -45,49 +50,85 @@ const trendingCreators = [
   },
 ];
 
-const searchResultsData = [
-  {
-    id: 101,
-    username: "helltotheno",
-    name: "Hell to the No",
-    desc: "A safe place for people to speak their truths",
-    avatar:
-      "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=150&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 102,
-    username: "hellheroes",
-    name: "Hell Heroes",
-    desc: "Unique indie video game studio",
-    avatar:
-      "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=150&auto=format&fit=crop&q=60",
-  },
-];
-
-const followingList = [
-  {
-    username: "cara",
-    name: "Cara",
-    avatar:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=60",
-  },
-  {
-    username: "kaleigh",
-    name: "Kaleigh Cohen",
-    avatar:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=60",
-  },
-];
 
 const ExploreCreator = () => {
   const [activeTab, setActiveTab] = useState("explore");
   const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const filteredResults = searchResultsData.filter(
-    (r) =>
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const debouncedQuery = useDebounce(searchQuery, 350);
+
+  const runSearch = useCallback(async (query, pageToLoad) => {
+    if (!query.trim()) {
+      setResults([]);
+      setHasMore(false);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const data = await searchCreators(query.trim(), pageToLoad, PAGE_SIZE);
+      setResults((prev) => (pageToLoad === 0 ? data.content : [...prev, ...data.content]));
+      setHasMore(!data.last);
+      setPage(pageToLoad);
+    } catch {
+      if (pageToLoad === 0) setResults([]);
+      setHasMore(false);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    runSearch(debouncedQuery, 0);
+  }, [debouncedQuery, runSearch]);
+
+  const loadMore = useCallback(() => {
+    if (!isSearching) runSearch(debouncedQuery, page + 1);
+  }, [debouncedQuery, page, isSearching, runSearch]);
+
+  const sentinelRef = useInfiniteScroll({ hasMore, loading: isSearching, onLoadMore: loadMore });
+
+  const [followingList, setFollowingList] = useState([]);
+  const [followingPage, setFollowingPage] = useState(0);
+  const [followingHasMore, setFollowingHasMore] = useState(false);
+  const [followingLoading, setFollowingLoading] = useState(false);
+  const [followingLoaded, setFollowingLoaded] = useState(false);
+
+  const loadFollowing = useCallback(async (pageToLoad) => {
+    setFollowingLoading(true);
+    try {
+      const data = await getFollowing(pageToLoad, 10);
+      setFollowingList((prev) => (pageToLoad === 0 ? data.content : [...prev, ...data.content]));
+      setFollowingHasMore(!data.last);
+      setFollowingPage(pageToLoad);
+    } catch {
+      if (pageToLoad === 0) setFollowingList([]);
+      setFollowingHasMore(false);
+    } finally {
+      setFollowingLoading(false);
+      setFollowingLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "following" && !followingLoaded) {
+      loadFollowing(0);
+    }
+  }, [activeTab, followingLoaded, loadFollowing]);
+
+  const loadMoreFollowing = useCallback(() => {
+    if (!followingLoading) loadFollowing(followingPage + 1);
+  }, [followingLoading, followingPage, loadFollowing]);
+
+  const followingSentinelRef = useInfiniteScroll({
+    hasMore: followingHasMore,
+    loading: followingLoading,
+    onLoadMore: loadMoreFollowing,
+  });
 
   return (
     <Layout>
@@ -222,37 +263,52 @@ const ExploreCreator = () => {
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
-                  {filteredResults.length > 0 ? (
-                    <div className="divide-y divide-slate-100">
-                      {filteredResults.map((r) => (
-                        <div
-                          key={r.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:px-6 hover:bg-slate-50/80 transition-colors"
-                        >
-                          <Link
-                            to={`/${r.username}`}
-                            className="flex items-center gap-3 min-w-0 flex-1"
+                  {results.length > 0 ? (
+                    <>
+                      <div className="divide-y divide-slate-100">
+                        {results.map((r) => (
+                          <div
+                            key={r.username}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:px-6 hover:bg-slate-50/80 transition-colors"
                           >
-                            <img
-                              src={r.avatar}
-                              className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0"
-                              alt={r.name}
-                            />
-                            <div className="min-w-0">
-                              <h3 className="font-semibold truncate">{r.name}</h3>
-                              <p className="text-xs sm:text-sm text-slate-500 truncate">
-                                @{r.username} · {r.desc}
-                              </p>
-                            </div>
-                          </Link>
+                            <Link
+                              to={`/${r.username}`}
+                              className="flex items-center gap-3 min-w-0 flex-1"
+                            >
+                              <img
+                                src={r.profilePictureUrl || "https://placehold.co/44x44"}
+                                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover shrink-0"
+                                alt={r.displayName || r.username}
+                              />
+                              <div className="min-w-0">
+                                <h3 className="font-semibold truncate">
+                                  {r.displayName || r.username}
+                                </h3>
+                                <p className="text-xs sm:text-sm text-slate-500 truncate">
+                                  @{r.username}
+                                  {r.bio ? ` · ${r.bio}` : ""}
+                                </p>
+                              </div>
+                            </Link>
 
-                          <Link to={`/${r.username}`}>
-                            <button className="w-full sm:w-auto px-5 py-2 text-sm font-medium border border-slate-200 rounded-full hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all">
-                              View page
-                            </button>
-                          </Link>
+                            <Link to={`/${r.username}`}>
+                              <button className="w-full sm:w-auto px-5 py-2 text-sm font-medium border border-slate-200 rounded-full hover:bg-violet-600 hover:text-white hover:border-violet-600 transition-all">
+                                View page
+                              </button>
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                      {hasMore && <div ref={sentinelRef} className="h-8" />}
+                      {isSearching && page > 0 && (
+                        <div className="flex justify-center py-4">
+                          <Loader size={18} className="animate-spin text-violet-500" />
                         </div>
-                      ))}
+                      )}
+                    </>
+                  ) : isSearching ? (
+                    <div className="flex justify-center py-12">
+                      <Loader size={24} className="animate-spin text-violet-500" />
                     </div>
                   ) : (
                     <div className="py-12 text-center text-slate-500">
@@ -269,41 +325,57 @@ const ExploreCreator = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
               {/* Feed post */}
               <div className="lg:col-span-2 bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-                  <img
-                    src={followingList[1].avatar}
-                    className="w-10 h-10 rounded-full object-cover"
-                    alt="creator"
-                  />
-                  <div>
-                    <span className="font-semibold text-sm sm:text-base">
-                      Kaleigh Cohen
-                    </span>
-                    <p className="text-xs text-slate-400">2 hours ago</p>
-                  </div>
-                </div>
+                {followingList.length > 0 ? (
+                  <>
+                    <div className="p-4 border-b border-slate-100 flex items-center gap-3">
+                      <img
+                        src={followingList[0].profilePictureUrl || "https://placehold.co/40x40"}
+                        className="w-10 h-10 rounded-full object-cover"
+                        alt={followingList[0].displayName || followingList[0].username}
+                      />
+                      <div>
+                        <span className="font-semibold text-sm sm:text-base">
+                          {followingList[0].displayName || followingList[0].username}
+                        </span>
+                        <p className="text-xs text-slate-400">@{followingList[0].username}</p>
+                      </div>
+                    </div>
 
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-10 sm:p-16 text-center">
-                  <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
-                    <Lock size={24} />
-                  </div>
-                  <p className="font-medium text-lg">Members-only content</p>
-                  <p className="text-slate-400 text-sm mt-1">
-                    Support to unlock exclusive posts
-                  </p>
-                </div>
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-10 sm:p-16 text-center">
+                      <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
+                        <Lock size={24} />
+                      </div>
+                      <p className="font-medium text-lg">Members-only content</p>
+                      <p className="text-slate-400 text-sm mt-1">
+                        Support to unlock exclusive posts
+                      </p>
+                    </div>
 
-                <div className="p-4 flex gap-5 text-slate-500">
-                  <button className="hover:text-pink-500 transition-colors">
-                    <Heart size={20} />
-                  </button>
-                  <button className="hover:text-violet-500 transition-colors">
-                    <MessageCircle size={20} />
-                  </button>
-                  <button className="hover:text-slate-800 transition-colors">
-                    <Share2 size={20} />
-                  </button>
-                </div>
+                    <div className="p-4 flex gap-5 text-slate-500">
+                      <button className="hover:text-pink-500 transition-colors">
+                        <Heart size={20} />
+                      </button>
+                      <button className="hover:text-violet-500 transition-colors">
+                        <MessageCircle size={20} />
+                      </button>
+                      <button className="hover:text-slate-800 transition-colors">
+                        <Share2 size={20} />
+                      </button>
+                    </div>
+                  </>
+                ) : followingLoading ? (
+                  <div className="flex justify-center py-16">
+                    <Loader size={24} className="animate-spin text-violet-500" />
+                  </div>
+                ) : (
+                  <div className="py-16 text-center text-slate-500 px-6">
+                    <Users className="mx-auto mb-3 opacity-40" size={32} />
+                    <p className="font-medium">You're not following any creators yet</p>
+                    <p className="text-sm text-slate-400 mt-1">
+                      Follow creators to see their posts here.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Following sidebar */}
@@ -312,33 +384,43 @@ const ExploreCreator = () => {
                   Following
                 </h3>
 
-                <div className="space-y-1">
-                  {followingList.map((f) => (
-                    <Link
-                      key={f.username}
-                      to={`/${f.username}`}
-                      className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-xl hover:bg-violet-50 transition-colors group"
-                    >
-                      <img
-                        src={f.avatar}
-                        className="w-9 h-9 rounded-full object-cover"
-                        alt={f.name}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm block truncate group-hover:text-violet-700">
-                          {f.name}
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          @{f.username}
-                        </span>
+                {followingList.length === 0 && !followingLoading ? (
+                  <p className="text-slate-400 text-sm italic">Not following anyone yet</p>
+                ) : (
+                  <div className="space-y-1">
+                    {followingList.map((f) => (
+                      <Link
+                        key={f.username}
+                        to={`/${f.username}`}
+                        className="flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-xl hover:bg-violet-50 transition-colors group"
+                      >
+                        <img
+                          src={f.profilePictureUrl || "https://placehold.co/36x36"}
+                          className="w-9 h-9 rounded-full object-cover"
+                          alt={f.displayName || f.username}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-sm block truncate group-hover:text-violet-700">
+                            {f.displayName || f.username}
+                          </span>
+                          <span className="text-xs text-slate-400">
+                            @{f.username}
+                          </span>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className="text-slate-300 group-hover:text-violet-500 shrink-0"
+                        />
+                      </Link>
+                    ))}
+                    {followingHasMore && <div ref={followingSentinelRef} className="h-6" />}
+                    {followingLoading && followingPage > 0 && (
+                      <div className="flex justify-center py-2">
+                        <Loader size={16} className="animate-spin text-violet-500" />
                       </div>
-                      <ChevronRight
-                        size={16}
-                        className="text-slate-300 group-hover:text-violet-500 shrink-0"
-                      />
-                    </Link>
-                  ))}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

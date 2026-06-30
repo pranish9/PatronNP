@@ -1,42 +1,45 @@
 import React from 'react';
 import { Star } from 'lucide-react';
-
-const testimonials = [
-  {
-    name: "Bibek Shrestha",
-    role: "Twitch Streamer",
-    initial: "B",
-    text: "I earned my first Rs 10,000 in two weeks. The live alerts make my stream so much more interactive.",
-    rating: 5
-  },
-  {
-    name: "Anjali Karki",
-    role: "YouTuber",
-    initial: "A",
-    text: "Super easy to set up. My subscribers love being able to support me directly through eSewa.",
-    rating: 5
-  },
-  {
-    name: "Roshan Tamang",
-    role: "Designer",
-    initial: "R",
-    text: "Selling my Photoshop presets has become a real side income. No coding, no headaches.",
-    rating: 5
-  }
-];
+import { useLanguage } from '../../hooks/useLanguage';
 
 const Testimonials = () => {
+  const { t } = useLanguage();
+
+  const testimonials = [
+    {
+      name: t('landing.testimonial1Name'),
+      role: t('landing.testimonial1Role'),
+      initial: "B",
+      text: t('landing.testimonial1Text'),
+      rating: 5
+    },
+    {
+      name: t('landing.testimonial2Name'),
+      role: t('landing.testimonial2Role'),
+      initial: "A",
+      text: t('landing.testimonial2Text'),
+      rating: 5
+    },
+    {
+      name: t('landing.testimonial3Name'),
+      role: t('landing.testimonial3Role'),
+      initial: "R",
+      text: t('landing.testimonial3Text'),
+      rating: 5
+    }
+  ];
+
   return (
     <section id="testimonials" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4">
-        
+
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="text-emerald-500 font-semibold tracking-wider uppercase text-sm">
-            What creators say
+            {t('landing.testimonialsEyebrow')}
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mt-2">
-            Loved by Nepali <span className="text-emerald-500">creators</span>
+            {t('landing.testimonialsTitle1')} <span className="text-emerald-500">{t('landing.testimonialsTitleHighlight')}</span>
           </h2>
         </div>
 

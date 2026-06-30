@@ -17,6 +17,8 @@ import { getAuthUser } from "../../utils/auth";
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import SupportButton from "../creatorLayout/RightSidebar";
 import CreateMenu from "./CreateMenu";
+import FollowButton from "./FollowButton";
+import LanguageSwitcher from "../LanguageSwitcher";
 
 const Navbar = ({ username, onLogout }) => {
   const location = useLocation();
@@ -160,13 +162,13 @@ const Navbar = ({ username, onLogout }) => {
 
           {(userState === "logged-in" || userState === "visitor") && (
             <>
+              <FollowButton username={username} loggedIn={userState === "logged-in"} />
               <button
                 onClick={handleShare}
                 className="hidden sm:flex items-center gap-1 border border-patron-gray-200 px-2.5 py-1.5 rounded-full text-xs hover:bg-patron-gray-50"
               >
                 <Share2 size={14} />
               </button>
-              <SupportButton size="sm" />
             </>
           )}
 
@@ -178,6 +180,8 @@ const Navbar = ({ username, onLogout }) => {
               <Share2 size={14} />
             </button>
           )}
+
+          <LanguageSwitcher className="hidden sm:flex" />
 
           <button
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
@@ -265,6 +269,10 @@ const Navbar = ({ username, onLogout }) => {
               Edit page
             </button>
           )}
+
+          <div className="col-span-2 sm:col-span-4 flex justify-center py-1">
+            <LanguageSwitcher />
+          </div>
 
           <div className="col-span-2 sm:col-span-4 border-t border-patron-gray-100 pt-2 mt-1 flex gap-2">
             {userState === "visitor" && (

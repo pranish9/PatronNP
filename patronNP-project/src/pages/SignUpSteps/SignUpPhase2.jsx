@@ -4,9 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { scheduleAutoLogout } from "../../utils/authTimer";
+import { useLanguage } from "../../hooks/useLanguage";
 
 const SignUpPhase2 = ({ onPrev, formData }) => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [step, setStep] = useState("form");
 
@@ -45,10 +48,11 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
         );
 
         localStorage.setItem("accessToken", res.data.token);
-        toast.success("Account created successfully with Google");
+        scheduleAutoLogout();
+        toast.success(t('auth.googleSignupSuccess'));
         navigate("/onboarding");
       } catch (err) {
-        const msg = err.response?.data?.message || "Failed to sign up with Google";
+        const msg = err.response?.data?.message || t('auth.failedGoogleSignup');
         setError(msg);
         toast.error(msg);
       } finally {
@@ -56,8 +60,8 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
       }
     },
     onError: () => {
-      setError("Failed to authenticate with Google");
-      toast.error("Failed to authenticate with Google");
+      setError(t('auth.failedGoogleAuth'));
+      toast.error(t('auth.failedGoogleAuth'));
     },
     scope: "openid email profile",
   });
@@ -101,13 +105,13 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
   const handleSendOtp = async () => {
     setError("");
 
-    if (!email) return setError("Email is required");
-    if (!password) return setError("Password is required");
+    if (!email) return setError(t('auth.emailRequired'));
+    if (!password) return setError(t('auth.passwordRequired'));
     if (!isStrongPassword()) {
-      return setError("Password is too weak");
+      return setError(t('auth.passwordTooWeak'));
     }
     if (password !== confirmPassword) {
-      return setError("Passwords do not match");
+      return setError(t('auth.passwordMismatch'));
     }
 
     try {
@@ -117,8 +121,8 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
         email,
       });
 
-      toast.success("OTP sent successfully");
-      
+      toast.success(t('auth.otpSentSuccess'));
+
       // Navigate to OTP verification page with data
       navigate("/verify-otp", {
         state: {
@@ -133,11 +137,11 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
         const msg = err.response?.data;
 
         if (status === 409) {
-          setError("This email is already registered");
-          toast.error("This email is already registered");
+          setError(t('auth.emailAlreadyRegistered'));
+          toast.error(t('auth.emailAlreadyRegistered'));
         } else {
-          setError(msg || "Failed to send OTP");
-          toast.error(msg || "Failed to send OTP");
+          setError(msg || t('payment.failedToSendOtp'));
+          toast.error(msg || t('payment.failedToSendOtp'));
         }
       } finally {
       setLoading(false);
@@ -157,7 +161,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
         </button>
 
         <h1 className="text-2xl font-bold">
-          {step === "otp" ? "Verify Your Email" : authMethod === "google" ? "Complete Google Sign-up" : "Email & Password"}
+          {step === "otp" ? t('auth.verifyYourEmail') : authMethod === "google" ? t('auth.completeGoogleSignup') : t('auth.emailPassword')}
         </h1>
       </div>
 
@@ -166,7 +170,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
         <div className="space-y-4">
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-700">
-              We'll use your Google account to create your account with username <b>{username}</b>
+              {t('auth.weWillUseGoogle')} <b>{username}</b>
             </p>
           </div>
 
@@ -182,7 +186,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
             {loading ? (
               <>
                 <Loader size={18} className="animate-spin" />
-                Connecting...
+                {t('auth.connecting')}
               </>
             ) : (
               <>
@@ -192,7 +196,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                Continue with Google
+                {t('auth.continueWithGoogle')}
               </>
             )}
           </button>
@@ -206,7 +210,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
           {/* EMAIL */}
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t('auth.email')}
             className="w-full border p-3 rounded"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -216,7 +220,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
+              placeholder={t('auth.password')}
               className="w-full border p-3 rounded pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -245,7 +249,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
           <div className="relative">
             <input
               type={showConfirmPassword ? "text" : "password"}
-              placeholder="Confirm Password"
+              placeholder={t('auth.confirmPassword')}
               className="w-full border p-3 rounded pr-10"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -273,7 +277,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
             disabled={loading}
             className="w-full bg-green-500 text-white p-3 rounded"
           >
-            {loading ? "Sending OTP..." : "Send OTP"}
+            {loading ? t('auth.sendingOtp') : t('payment.sendOtp')}
           </button>
         </div>
       )}

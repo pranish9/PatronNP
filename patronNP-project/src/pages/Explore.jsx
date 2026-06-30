@@ -59,11 +59,11 @@ export const Explore = () => {
 
   return (
     <Layout>
-      <div className="py-12 px-4 space-y-8">
+      <div className="py-8 sm:py-12 px-4 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="max-w-6xl mx-auto text-center space-y-4">
-          <h1 className="text-4xl font-bold">{t('common.explore')} {t('creator.supportedCreators')}</h1>
-          <p className="text-slate-600 dark:text-slate-400 text-lg">
+        <div className="max-w-6xl mx-auto text-center space-y-3 sm:space-y-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">{t('common.explore')} {t('creator.supportedCreators')}</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
             Discover and support amazing creators from Nepal
           </p>
         </div>
@@ -83,7 +83,7 @@ export const Explore = () => {
         {/* Creators Grid */}
         <div className="max-w-6xl mx-auto">
           {filteredCreators.length > 0 ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredCreators.map((creator) => (
                 <CreatorCard key={creator.id} creator={creator} />
               ))}

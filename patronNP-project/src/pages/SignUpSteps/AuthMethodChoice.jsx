@@ -1,16 +1,19 @@
 import React from "react";
 import { Mail } from "lucide-react";
+import { useLanguage } from "../../hooks/useLanguage";
 
 const AuthMethodChoice = ({ onEmailChoice, onGoogleChoice }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="max-w-md mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Choose Your Sign-up Method
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+          {t('auth.chooseSignupMethod')}
         </h1>
         <p className="text-gray-500 mt-2">
-          Complete your registration with your preferred method
+          {t('auth.chooseSignupSubtitle')}
         </p>
       </div>
 
@@ -18,21 +21,21 @@ const AuthMethodChoice = ({ onEmailChoice, onGoogleChoice }) => {
         {/* Email Sign-up Button */}
         <button
           onClick={onEmailChoice}
-          className="w-full p-6 border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all flex items-center gap-4 group"
+          className="w-full p-4 sm:p-6 border-2 border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all flex items-center gap-4 group"
         >
           <div className="p-3 bg-green-100 group-hover:bg-green-200 rounded-lg">
             <Mail className="text-green-600" size={24} />
           </div>
           <div className="text-left">
-            <h3 className="font-semibold text-gray-800">Email & Password</h3>
-            <p className="text-sm text-gray-500">Sign up with your email</p>
+            <h3 className="font-semibold text-gray-800">{t('auth.emailPassword')}</h3>
+            <p className="text-sm text-gray-500">{t('auth.signUpWithEmail')}</p>
           </div>
         </button>
 
         {/* Google Sign-up Button */}
         <button
           onClick={onGoogleChoice}
-          className="w-full p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center gap-4 group"
+          className="w-full p-4 sm:p-6 border-2 border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center gap-4 group"
         >
           <div className="p-3 bg-blue-100 group-hover:bg-blue-200 rounded-lg">
             <svg
@@ -60,8 +63,8 @@ const AuthMethodChoice = ({ onEmailChoice, onGoogleChoice }) => {
             </svg>
           </div>
           <div className="text-left">
-            <h3 className="font-semibold text-gray-800">Google Sign-up</h3>
-            <p className="text-sm text-gray-500">Sign up with your Google account</p>
+            <h3 className="font-semibold text-gray-800">{t('auth.googleSignup')}</h3>
+            <p className="text-sm text-gray-500">{t('auth.signUpWithGoogle')}</p>
           </div>
         </button>
       </div>
@@ -69,9 +72,9 @@ const AuthMethodChoice = ({ onEmailChoice, onGoogleChoice }) => {
       {/* Info Box */}
       <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <p className="text-sm text-blue-700">
-          <b>Safe & Secure</b>
+          <b>{t('auth.safeSecure')}</b>
           <br />
-          We only access the information needed to create your account.
+          {t('auth.safeSecureDesc')}
         </p>
       </div>
     </div>

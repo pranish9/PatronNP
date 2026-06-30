@@ -1,36 +1,39 @@
 import React from 'react';
 import { Wallet, TrendingUp, ShoppingBag } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 
 const EarningsSection = () => {
+  const { t } = useLanguage();
+
   const earningMethods = [
-    { name: 'Direct Tips', desc: 'From fans who love your work', amount: 'Rs 2,000+', icon: Wallet },
-    { name: 'Subscriptions', desc: 'Monthly recurring income', amount: 'Rs 8,000+', icon: TrendingUp },
-    { name: 'Product Sales', desc: 'Sell anytime, anywhere', amount: 'Rs 10,000+', icon: ShoppingBag },
+    { name: t('landing.earnMethod1Name'), desc: t('landing.earnMethod1Desc'), amount: 'Rs 2,000+', icon: Wallet },
+    { name: t('landing.earnMethod2Name'), desc: t('landing.earnMethod2Desc'), amount: 'Rs 8,000+', icon: TrendingUp },
+    { name: t('landing.earnMethod3Name'), desc: t('landing.earnMethod3Desc'), amount: 'Rs 10,000+', icon: ShoppingBag },
   ];
 
   return (
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        
+
         {/* Left Side: Content */}
         <div className="space-y-8">
           <div>
             <span className="text-emerald-500 font-semibold tracking-wider uppercase text-sm">
-              Earn in multiple ways
+              {t('landing.earningsEyebrow')}
             </span>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mt-2">
-              From Rs 5,000 to <br />
-              <span className="text-emerald-500">Rs 50,000+ per month</span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mt-2">
+              {t('landing.earningsTitle1')} <br />
+              <span className="text-emerald-500">{t('landing.earningsTitleHighlight')}</span>
             </h2>
             <p className="text-gray-600 mt-6 text-lg max-w-md">
-              Stack your income streams. Even small Nepali creators are earning a stable side income with tips, members, and digital products.
+              {t('landing.earningsSubtitle')}
             </p>
           </div>
 
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-sm">
-            <p className="text-gray-500 text-sm font-medium">Average monthly potential</p>
-            <h3 className="text-4xl font-bold text-gray-900 mt-1">Rs 20,000</h3>
-            <p className="text-gray-400 text-xs mt-2">Based on active creators with 1k+ followers</p>
+            <p className="text-gray-500 text-sm font-medium">{t('landing.earningsAvgLabel')}</p>
+            <h3 className="text-4xl font-bold text-gray-900 mt-1">{t('landing.earningsAvgAmount')}</h3>
+            <p className="text-gray-400 text-xs mt-2">{t('landing.earningsAvgNote')}</p>
           </div>
         </div>
 

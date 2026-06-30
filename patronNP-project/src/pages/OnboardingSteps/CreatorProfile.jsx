@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Heart,
@@ -18,10 +18,10 @@ import PaymentMethodPicker from "../../components/PublicCreatorLayout/PaymentMet
 import SupportButton from "../../components/creatorLayout/RightSidebar";
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "../CreatorPage/UserNotFound";
-import {
-  getCreatorPosts,
-  getPublicSupporters,
-} from "../../data/creatorMockData";
+import { getCreatorPosts } from "../../data/creatorMockData";
+import { initiateEsewaTip, redirectToEsewa } from "../../services/esewaService";
+import { initiateKhaltiTip, redirectToKhalti } from "../../services/khaltiService";
+import { getRecentSupporters } from "../../services/supporterService";
 
 const CreatorProfile = () => {
   const {
@@ -30,7 +30,6 @@ const CreatorProfile = () => {
     loading,
     notFound,
     isOwner,
-    loggedIn,
     setSupportModalOpen,
     setEditModalOpen,
   } = useCreatorPage();
@@ -43,7 +42,14 @@ const CreatorProfile = () => {
   const [paymentMethod, setPaymentMethod] = useState("ESEWA");
   const [donating, setDonating] = useState(false);
   const [paymentPopupOpen, setPaymentPopupOpen] = useState(false);
-  
+  const [supporters, setSupporters] = useState([]);
+
+  useEffect(() => {
+    if (!username) return;
+    getRecentSupporters(username, 0, 10)
+      .then((data) => setSupporters(data.content || []))
+      .catch(() => setSupporters([]));
+  }, [username]);
 
   if (loading) {
     return (
@@ -64,7 +70,6 @@ const CreatorProfile = () => {
     ? parseInt(customAmount, 10)
     : unitPrice * quantity;
 
-  const supporters = getPublicSupporters(username);
   const recentPosts = getCreatorPosts(username).slice(0, 3);
 
   const videoUrl = c.featuredVideoUrl || c.introVideoUrl;
@@ -77,10 +82,6 @@ const CreatorProfile = () => {
   };
 
   const handleSupportClick = () => {
-    if (!loggedIn) {
-      toast.error("Please log in to support");
-      return;
-    }
     if (!totalAmount || totalAmount < 10) {
       toast.error("Minimum amount is NPR 10");
       return;
@@ -91,14 +92,25 @@ const CreatorProfile = () => {
   const handleConfirmPayment = async () => {
     setDonating(true);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      toast.success(
-        `Redirecting to ${paymentMethod === "ESEWA" ? "eSewa" : "Khalti"}...`
-      );
-      setPaymentPopupOpen(false);
+      if (paymentMethod === "ESEWA") {
+        const { formUrl, fields } = await initiateEsewaTip({
+          creatorUsername: username,
+          amount: totalAmount,
+          supporterName,
+          message: supportMessage,
+        });
+        redirectToEsewa({ formUrl, fields });
+      } else {
+        const { paymentUrl } = await initiateKhaltiTip({
+          creatorUsername: username,
+          amount: totalAmount,
+          supporterName,
+          message: supportMessage,
+        });
+        redirectToKhalti(paymentUrl);
+      }
     } catch {
       toast.error("Payment failed");
-    } finally {
       setDonating(false);
     }
   };
@@ -149,7 +161,13 @@ const CreatorProfile = () => {
               className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-full object-cover ring-4 ring-patron-white shadow-xl shrink-0"
             />
             <div className="text-center sm:text-left flex-1 min-w-0 pb-2">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-patron-black truncate">
+              <h1
+                className="text-xl sm:text-2xl md:text-3xl font-bold text-patron-black truncate"
+                style={{
+                  textShadow:
+                    "0 1px 2px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.7)",
+                }}
+              >
                 {c.displayName}
               </h1>
               <p className="text-patron-gray-500 text-sm mt-0.5">@{c.username || username}</p>
@@ -159,11 +177,6 @@ const CreatorProfile = () => {
                 </p>
               )}
             </div>
-            {!isOwner && (
-              <div className="pb-2 shrink-0">
-                <SupportButton showLabel size="md" />
-              </div>
-            )}
           </div>
 
           {videoUrl && (
@@ -254,41 +267,35 @@ const CreatorProfile = () => {
               </div>
             ) : (
               <div className="divide-y divide-patron-gray-100">
-                {supporters.map((s) => {
-                  const coffeeCount = Math.max(
-                    1,
-                    Math.round((s.amount || unitPrice) / unitPrice)
-                  );
-                  return (
-                    <div key={s.id} className="flex gap-3 py-4 first:pt-0 last:pb-0">
-                      <div className="w-10 h-10 rounded-full bg-patron-orange-50 text-patron-orange-600 flex items-center justify-center shrink-0">
-                        <Coffee size={18} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-patron-black">
-                          <span className="font-semibold">{s.name}</span>{" "}
-                          <span className="text-patron-gray-500">
-                            bought {coffeeCount} {coffeeCount === 1 ? unitLabel : `${unitLabel}s`}
-                          </span>
-                        </p>
-                        {s.message && (
-                          <p className="text-sm text-patron-gray-600 mt-1 italic leading-relaxed">
-                            "{s.message}"
-                          </p>
-                        )}
-                        <p className="text-[11px] text-patron-gray-400 mt-1.5">
-                          {new Date(s.timestamp).toLocaleDateString("en-NP", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
-                      <span className="text-xs font-bold text-patron-orange-600 shrink-0">
-                        NPR {s.amount}
-                      </span>
+                {supporters.map((s, i) => (
+                  <div key={`${s.supporterName}-${s.createdAt}-${i}`} className="flex gap-3 py-4 first:pt-0 last:pb-0">
+                    <div className="w-10 h-10 rounded-full bg-patron-orange-50 text-patron-orange-600 flex items-center justify-center shrink-0">
+                      <Coffee size={18} />
                     </div>
-                  );
-                })}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-patron-black">
+                        <span className="font-semibold">{s.supporterName}</span>{" "}
+                        <span className="text-patron-gray-500">
+                          {s.category === "SHOP" ? "bought something" : `sent a ${unitLabel}`}
+                        </span>
+                      </p>
+                      {s.message && (
+                        <p className="text-sm text-patron-gray-600 mt-1 italic leading-relaxed">
+                          "{s.message}"
+                        </p>
+                      )}
+                      <p className="text-[11px] text-patron-gray-400 mt-1.5">
+                        {new Date(s.createdAt).toLocaleDateString("en-NP", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-patron-orange-600 shrink-0">
+                      NPR {s.amount}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </section>
@@ -433,22 +440,14 @@ const CreatorProfile = () => {
               />
 
               <div className="space-y-2">
-                {loggedIn ? (
-                  <Button
-                    variant="accent"
-                    size="full"
-                    onClick={handleSupportClick}
-                    className="rounded-xl py-3"
-                  >
-                    Support NPR {totalAmount?.toLocaleString() || "—"}
-                  </Button>
-                ) : (
-                  <Link to="/signin" state={{ from: `/${username}` }}>
-                    <Button size="full" className="rounded-xl w-full">
-                      Log in to support
-                    </Button>
-                  </Link>
-                )}
+                <Button
+                  variant="accent"
+                  size="full"
+                  onClick={handleSupportClick}
+                  className="rounded-xl py-3"
+                >
+                  Support NPR {totalAmount?.toLocaleString() || "—"}
+                </Button>
                 <button
                   type="button"
                   onClick={() => setSupportModalOpen(true)}

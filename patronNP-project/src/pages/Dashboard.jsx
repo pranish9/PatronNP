@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Settings, TrendingUp, Users, Heart, LogOut, Share2, Lock, ShoppingBag, FileText, ChevronRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Settings, TrendingUp, Users, Heart, LogOut, Share2, Lock, ShoppingBag, FileText, ChevronRight, Gift } from 'lucide-react'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import Layout from '../components/creatorLayout/Layout'
@@ -9,6 +9,8 @@ import Alert from '../components/Alert'
 import { useLanguage } from '../hooks/useLanguage'
 import useAuthStore from '../stores/authStore'
 import { useNavigate } from 'react-router-dom'
+import { getMyTransactions } from '../services/transactionService'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 
 // Register ChartJS modules
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend)
@@ -18,6 +20,19 @@ export const Dashboard = () => {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
+  const [transactions, setTransactions] = useState([])
+  const [totalEarnings, setTotalEarnings] = useState(0)
+  const [loadingTransactions, setLoadingTransactions] = useState(true)
+
+  useEffect(() => {
+    getMyTransactions(0, 10)
+      .then((data) => {
+        setTransactions(data.transactions?.content || [])
+        setTotalEarnings(data.totalEarnings || 0)
+      })
+      .catch(() => {})
+      .finally(() => setLoadingTransactions(false))
+  }, [])
 
   const handleLogout = () => {
     logout();
@@ -80,10 +95,13 @@ export const Dashboard = () => {
                   <p className="text-sm text-gray-400 font-medium">buymeacoffee.com/pranishxgrowth</p>
                 </div>
               </div>
-              <button className="flex items-center gap-2 bg-[#212121] text-white hover:bg-black text-xs font-semibold px-4 py-2 rounded-full transition-all">
-                <Share2 size={14} />
-                Share page
-              </button>
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher />
+                <button className="flex items-center gap-2 bg-[#212121] text-white hover:bg-black text-xs font-semibold px-4 py-2 rounded-full transition-all">
+                  <Share2 size={14} />
+                  Share page
+                </button>
+              </div>
             </div>
 
             {/* Earnings Section & ChartJS Visualizer */}
@@ -95,8 +113,8 @@ export const Dashboard = () => {
                 </span>
               </div>
 
-              <div className="text-5xl font-black text-gray-900 tracking-tight">
-                ${stats.totalEarnings}
+              <div className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight">
+                NPR {totalEarnings.toLocaleString()}
               </div>
 
               {/* Minimalist Legend Pills */}
@@ -112,14 +130,75 @@ export const Dashboard = () => {
               </div>
             </div>
 
-            {/* Zero State Messaging Overlay Block */}
-            <div className="border border-gray-100 rounded-2xl py-12 text-center bg-white shadow-xs max-w-xl mx-auto">
-              <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 border border-gray-100">
-                <Heart size={20} />
+            {/* Recent transactions */}
+            {loadingTransactions ? (
+              <div className="py-12 text-center text-gray-400 text-sm">Loading transactions...</div>
+            ) : transactions.length === 0 ? (
+              <div className="border border-gray-100 rounded-2xl py-12 text-center bg-white shadow-xs max-w-xl mx-auto">
+                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 border border-gray-100">
+                  <Heart size={20} />
+                </div>
+                <h4 className="text-base font-bold text-gray-900">You don't have any supporters yet</h4>
+                <p className="text-xs text-gray-400 mt-1">Share your page with your audience to get started.</p>
               </div>
-              <h4 className="text-base font-bold text-gray-900">You don't have any supporters yet</h4>
-              <p className="text-xs text-gray-400 mt-1">Share your page with your audience to get started.</p>
-            </div>
+            ) : (
+              <div className="border border-gray-100 rounded-2xl bg-white overflow-hidden">
+                <div className="px-5 py-3 border-b border-gray-100">
+                  <h4 className="text-sm font-bold text-gray-900">Recent transactions</h4>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {transactions.map((t) => {
+                    const categoryIcon =
+                      t.category === "SHOP" ? (
+                        <ShoppingBag size={14} />
+                      ) : t.category === "MEMBERSHIP" ? (
+                        <Lock size={14} />
+                      ) : (
+                        <Gift size={14} />
+                      )
+                    const statusColor =
+                      t.status === "SUCCESS"
+                        ? "text-emerald-600 bg-emerald-50"
+                        : t.status === "PENDING"
+                        ? "text-amber-600 bg-amber-50"
+                        : "text-red-600 bg-red-50"
+                    return (
+                      <div
+                        key={t.transactionUuid}
+                        className="flex items-center gap-3 px-5 py-3"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 border border-gray-100 shrink-0">
+                          {categoryIcon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {t.supporterName || "Anonymous"}
+                            {t.message && (
+                              <span className="text-gray-400 font-normal"> — "{t.message}"</span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {t.provider} · {t.category || "TIP"} ·{" "}
+                            {new Date(t.createdAt).toLocaleDateString("en-NP", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-gray-900">
+                            NPR {t.amount?.toLocaleString()}
+                          </p>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${statusColor}`}>
+                            {t.status}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
           </div>
 
@@ -188,7 +267,7 @@ export const Dashboard = () => {
               </Button>
               <Button variant="secondary" size="sm" className="text-xs py-1.5 flex items-center gap-1.5" onClick={handleLogout}>
                 <LogOut size={14} />
-                {t('logout')}
+                {t('common.logout')}
               </Button>
             </div>
           </div>

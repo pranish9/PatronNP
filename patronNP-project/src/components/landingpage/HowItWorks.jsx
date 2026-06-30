@@ -1,35 +1,38 @@
 import React from 'react';
+import { useLanguage } from '../../hooks/useLanguage';
 
 const HowItWorks = () => {
+  const { t } = useLanguage();
+
   const steps = [
     {
       id: "01",
-      title: "Create your page",
-      description: "Sign up and set up your creator profile in minutes. Add your photo, bio, and tip jar."
+      title: t('landing.step1Title'),
+      description: t('landing.step1Desc')
     },
     {
       id: "02",
-      title: "Share your link",
-      description: "Drop your PatronNP link on Instagram, YouTube, TikTok, Facebook — anywhere your fans hang out."
+      title: t('landing.step2Title'),
+      description: t('landing.step2Desc')
     },
     {
       id: "03",
-      title: "Start earning",
-      description: "Receive tips, sell products, grow subscribers. Withdraw to eSewa, Khalti or your bank."
+      title: t('landing.step3Title'),
+      description: t('landing.step3Desc')
     }
   ];
 
   return (
     <section id="how-it-works" className="py-16 md:py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
-        
+
         {/* Header */}
         <div className="text-center mb-16">
           <span className="text-emerald-500 font-semibold tracking-wider uppercase text-sm">
-            How it works
+            {t('landing.howItWorksEyebrow')}
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900 mt-2">
-            Start earning in 3 simple steps
+            {t('landing.howItWorksTitle')}
           </h2>
         </div>
 

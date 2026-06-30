@@ -7,6 +7,8 @@ import Button from "../../components/Button";
 import PaymentMethodPicker from "../../components/PublicCreatorLayout/PaymentMethodPicker";
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import useCartStore from "../../stores/cartStore";
+import { initiateEsewaPayment, redirectToEsewa } from "../../services/esewaService";
+import { initiateKhaltiPayment, redirectToKhalti } from "../../services/khaltiService";
 
 const CreatorCheckout = () => {
   const navigate = useNavigate();
@@ -57,17 +59,30 @@ const CreatorCheckout = () => {
       toast.error("Email is required");
       return;
     }
+
     setPaying(true);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      toast.success(
-        `Redirecting to ${paymentMethod === "ESEWA" ? "eSewa" : "Khalti"} for Rs ${total}...`
-      );
-      clearCart();
-      navigate(`/${username}/checkout/success`);
+      if (paymentMethod === "ESEWA") {
+        const { formUrl, fields } = await initiateEsewaPayment({
+          creatorUsername: username,
+          amount: total,
+          buyerEmail: email,
+          buyerPhone: phone,
+        });
+        clearCart();
+        redirectToEsewa({ formUrl, fields });
+      } else {
+        const { paymentUrl } = await initiateKhaltiPayment({
+          creatorUsername: username,
+          amount: total,
+          buyerEmail: email,
+          buyerPhone: phone,
+        });
+        clearCart();
+        redirectToKhalti(paymentUrl);
+      }
     } catch {
       toast.error("Payment failed");
-    } finally {
       setPaying(false);
     }
   };

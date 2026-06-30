@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../hooks/useLanguage';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 const Navbar = ({ onSearchOpen }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useLanguage();
 
   const navLinks = [
-    { name: 'Features', path: '#features' },
-    { name: 'How it Works', path: '#how-it-works' },
-    { name: 'Earning Potential', path: '#earning-sections'},
-    { name: 'Testimonials', path: '#testimonials' },
+    { name: t('landing.navFeatures'), path: '#features' },
+    { name: t('landing.navHowItWorks'), path: '#how-it-works' },
+    { name: t('landing.navEarning'), path: '#earning-sections'},
+    { name: t('landing.navTestimonials'), path: '#testimonials' },
   ];
 
   return (
@@ -28,8 +31,8 @@ const Navbar = ({ onSearchOpen }) => {
           onClick={onSearchOpen}
           className="flex-grow max-w-sm mx-4 flex items-center gap-3 px-5 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-500 hover:border-orange-300 hover:bg-white hover:text-orange-600 transition-all shadow-sm"
         >
-          <Search size={16} /> 
-          <span className="truncate">Search creators...</span>
+          <Search size={16} />
+          <span className="truncate">{t('landing.searchPlaceholder')}</span>
         </button>
 
         {/* Desktop Navigation Links - Hidden on small tablets to prevent overflow */}
@@ -43,8 +46,9 @@ const Navbar = ({ onSearchOpen }) => {
 
         {/* Auth Buttons - Hidden on small tablets */}
         <div className="hidden md:flex items-center gap-3 flex-shrink-0">
-          <Link to="/signin" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3">Login</Link>
-          <Link to="/signup" className="px-5 py-2 bg-orange-500 text-white rounded-full text-sm font-medium hover:bg-orange-600 transition-all shadow-md hover:shadow-orange-200">Sign Up</Link>
+          <LanguageSwitcher />
+          <Link to="/signin" className="text-sm font-medium text-gray-600 hover:text-gray-900 px-3">{t('landing.login')}</Link>
+          <Link to="/signup" className="px-5 py-2 bg-orange-500 text-white rounded-full text-sm font-medium hover:bg-orange-600 transition-all shadow-md hover:shadow-orange-200">{t('landing.signUp')}</Link>
         </div>
 
         {/* Mobile/Tablet Menu Toggle */}
@@ -56,11 +60,11 @@ const Navbar = ({ onSearchOpen }) => {
       {/* Mobile/Tablet Menu */}
       {isOpen && (
         <div className="md:hidden bg-white border-t p-4 flex flex-col gap-4 shadow-xl absolute w-full">
-          <button 
+          <button
             onClick={() => { onSearchOpen(); setIsOpen(false); }}
             className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-full text-gray-500 bg-gray-50"
           >
-            <Search size={18} /> Search creators...
+            <Search size={18} /> {t('landing.searchPlaceholder')}
           </button>
 
           {navLinks.map((item) => (
@@ -68,10 +72,14 @@ const Navbar = ({ onSearchOpen }) => {
               {item.name}
             </a>
           ))}
-          
+
+          <div className="flex justify-center">
+            <LanguageSwitcher />
+          </div>
+
           <hr />
-          <Link to="/signin" className="text-center font-medium text-gray-600 py-2" onClick={() => setIsOpen(false)}>Login</Link>
-          <Link to="/signup" className="bg-orange-500 text-white py-3 rounded-full font-medium text-center" onClick={() => setIsOpen(false)}>Sign Up</Link>
+          <Link to="/signin" className="text-center font-medium text-gray-600 py-2" onClick={() => setIsOpen(false)}>{t('landing.login')}</Link>
+          <Link to="/signup" className="bg-orange-500 text-white py-3 rounded-full font-medium text-center" onClick={() => setIsOpen(false)}>{t('landing.signUp')}</Link>
         </div>
       )}
     </nav>

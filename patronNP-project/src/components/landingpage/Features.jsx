@@ -1,29 +1,34 @@
 import React from 'react';
 import { CreditCard, Bell, ShoppingBag, Crown } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 
 const Features = () => {
+  const { t } = useLanguage();
+
   const features = [
     {
       icon: CreditCard,
-      title: 'Accept Tips Easily',
-      description: 'Let your fans send you money instantly with a simple link. No complicated setup.'
+      title: t('landing.feature1Title'),
+      description: t('landing.feature1Desc')
     },
     {
       icon: Bell,
-      title: 'Live Donation Alerts',
-      description: 'Real-time alerts with sound and animation. Perfect for streamers and live creators.'
+      title: t('landing.feature2Title'),
+      description: t('landing.feature2Desc')
     },
     {
       icon: ShoppingBag,
-      title: 'Sell Digital Products',
-      description: 'Sell notes, presets, courses, designs — anything digital. Upload once, earn forever.'
+      title: t('landing.feature3Title'),
+      description: t('landing.feature3Desc')
     },
     {
       icon: Crown,
-      title: 'Membership Tiers',
-      description: 'Bronze, Silver, Gold plans for your biggest fans with exclusive content.'
+      title: t('landing.feature4Title'),
+      description: t('landing.feature4Desc')
     }
   ];
+
+  const titleHighlight = t('landing.featuresTitleHighlight');
 
   return (
     <section className="py-20 px-4 bg-white">
@@ -31,13 +36,14 @@ const Features = () => {
         {/* Header Section */}
         <div className="text-center mb-16">
           <p className="text-emerald-500 font-semibold text-sm uppercase tracking-wider mb-2">
-            Everything You Need
+            {t('landing.featuresEyebrow')}
           </p>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-            Four powerful ways to <span className="text-emerald-500">earn online</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+            {t('landing.featuresTitle1')}{titleHighlight ? ' ' : ''}
+            {titleHighlight && <span className="text-emerald-500">{titleHighlight}</span>}
           </h2>
           <p className="text-gray-600 text-lg">
-            One platform. Every income stream a modern creator needs.
+            {t('landing.featuresSubtitle')}
           </p>
         </div>
 

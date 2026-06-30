@@ -1,16 +1,19 @@
 import React from 'react';
 // Import icons explicitly. If one fails, delete the line to test.
 import { Play, Camera, Book, Palette, Code, Music, Circle } from 'lucide-react';
+import { useLanguage } from '../../hooks/useLanguage';
 
 const CreatorTypes = () => {
+  const { t } = useLanguage();
+
   // Use a safe mapping object
   const creators = [
-    { name: 'YouTubers', icon: Play },
-    { name: 'Insta / TikTok', icon: Camera },
-    { name: 'Students', icon: Book },
-    { name: 'Designers', icon: Palette },
-    { name: 'Developers', icon: Code },
-    { name: 'Musicians', icon: Music },
+    { name: t('landing.creatorYoutubers'), icon: Play },
+    { name: t('landing.creatorInstaTiktok'), icon: Camera },
+    { name: t('landing.creatorStudents'), icon: Book },
+    { name: t('landing.creatorDesigners'), icon: Palette },
+    { name: t('landing.creatorDevelopers'), icon: Code },
+    { name: t('landing.creatorMusicians'), icon: Music },
   ];
 
   return (
@@ -18,7 +21,7 @@ const CreatorTypes = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-extrabold text-gray-900">
-            Built for <span className="text-emerald-500">every kind of creator</span>
+            {t('landing.creatorTypesTitle1')} <span className="text-emerald-500">{t('landing.creatorTypesTitleHighlight')}</span>
           </h2>
         </div>
 

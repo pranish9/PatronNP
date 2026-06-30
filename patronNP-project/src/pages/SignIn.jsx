@@ -6,11 +6,15 @@ import GoogleSignIn from "../components/auth/GoogleSignIn";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Loader } from "lucide-react";
 import toast from "react-hot-toast";
+import { scheduleAutoLogout } from "../utils/authTimer";
+import { useLanguage } from "../hooks/useLanguage";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 const OTP_TIME = 60;
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
@@ -68,6 +72,7 @@ const googleLogin = useGoogleLogin({
       );
 
       localStorage.setItem("accessToken", data.token);
+      scheduleAutoLogout();
       localStorage.setItem("user", JSON.stringify(data));
       localStorage.setItem("username", data.username);
       localStorage.setItem(
@@ -155,6 +160,7 @@ const googleLogin = useGoogleLogin({
       );
 
       localStorage.setItem("accessToken", res.data.token);
+      scheduleAutoLogout();
 
       localStorage.setItem(
         "user",
@@ -219,21 +225,22 @@ const googleLogin = useGoogleLogin({
             </h1>
 
             <p className="text-xs text-gray-500">
-              Support creators directly
+              {t('auth.tagline')}
             </p>
           </div>
         </div>
 
-        <div className="text-sm">
-          <span className="text-gray-600">
-            Not registered yet?
+        <div className="flex items-center gap-3 text-sm">
+          <LanguageSwitcher />
+          <span className="hidden sm:inline text-gray-600">
+            {t('auth.notRegistered')}
           </span>
 
           <button
             onClick={() => navigate("/signup")}
-            className="ml-2 font-semibold text-green-600 hover:text-green-700"
+            className="font-semibold text-green-600 hover:text-green-700"
           >
-            Sign up
+            {t('auth.signUp')}
           </button>
         </div>
       </nav>
@@ -253,11 +260,11 @@ const googleLogin = useGoogleLogin({
             />
 
             <h2 className="text-3xl font-bold mt-4 text-gray-900">
-              Welcome Back
+              {t('auth.welcomeBack')}
             </h2>
 
             <p className="text-gray-500 mt-2">
-              Sign in to continue supporting creators
+              {t('auth.signInSubtitle')}
             </p>
           </div>
 
@@ -275,7 +282,7 @@ const googleLogin = useGoogleLogin({
             >
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t('auth.enterEmail')}
                 value={email}
                 onChange={(e) =>
                   setEmail(e.target.value)
@@ -289,8 +296,8 @@ const googleLogin = useGoogleLogin({
                 className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-xl transition"
               >
                 {loading
-                  ? "Sending OTP..."
-                  : "Continue with Email"}
+                  ? t('auth.sendingOtp')
+                  : t('auth.continueWithEmail')}
               </button>
             </form>
           )}
@@ -299,7 +306,7 @@ const googleLogin = useGoogleLogin({
             <div className="space-y-5">
 
               <div className="text-center text-sm text-gray-600">
-                OTP sent to
+                {t('auth.otpSentTo')}
                 <br />
                 <span className="font-semibold">
                   {email}
@@ -308,7 +315,7 @@ const googleLogin = useGoogleLogin({
 
               <div className="text-center">
                 <span className="text-orange-600 font-semibold">
-                  {timer}s remaining
+                  {t('auth.secondsRemaining', { s: timer })}
                 </span>
               </div>
 
@@ -332,7 +339,7 @@ const googleLogin = useGoogleLogin({
                   )
                 }
                 placeholder="000000"
-                className="w-full p-4 text-center text-2xl tracking-[10px] rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 outline-none"
+                className="w-full p-4 text-center text-xl sm:text-2xl tracking-[6px] sm:tracking-[10px] rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-400 outline-none"
               />
 
               <button
@@ -341,8 +348,8 @@ const googleLogin = useGoogleLogin({
                 className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 rounded-xl transition"
               >
                 {loading
-                  ? "Verifying..."
-                  : "Login"}
+                  ? t('auth.verifying')
+                  : t('auth.loginButton')}
               </button>
 
               <button
@@ -355,15 +362,15 @@ const googleLogin = useGoogleLogin({
                 }`}
               >
                 {canResend
-                  ? "Resend OTP"
-                  : `Resend available in ${timer}s`}
+                  ? t('auth.resendOTP')
+                  : t('auth.resendAvailableIn', { s: timer })}
               </button>
 
               <button
                 onClick={() => setStep("email")}
                 className="w-full text-gray-500 text-sm hover:underline"
               >
-                Change Email
+                {t('auth.changeEmail')}
               </button>
             </div>
           )}
@@ -373,7 +380,7 @@ const googleLogin = useGoogleLogin({
             <div className="flex-1 h-px bg-gray-200"></div>
 
             <span className="px-4 text-sm text-gray-400">
-              OR
+              {t('auth.or')}
             </span>
 
             <div className="flex-1 h-px bg-gray-200"></div>
@@ -388,7 +395,7 @@ const googleLogin = useGoogleLogin({
             {loading ? (
               <>
                 <Loader className="animate-spin" size={18} />
-                Connecting...
+                {t('auth.connecting')}
               </>
             ) : (
               <>
@@ -415,7 +422,7 @@ const googleLogin = useGoogleLogin({
                   />
                 </svg>
 
-                Continue with Google
+                {t('auth.continueWithGoogle')}
               </>
             )}
           </button>

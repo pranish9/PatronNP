@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { useLanguage } from "../../hooks/useLanguage";
 
 const SupportForm = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [provider, setProvider] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -36,13 +38,13 @@ const SupportForm = () => {
   const handlePhoneSubmit = async () => {
 
     if (!provider) {
-      setError("Please select a payment provider.");
+      setError(t('payment.selectProvider'));
       return;
     }
 
 
     if (phoneNumber.length !== 10) {
-      setError("Please enter a valid 10 digit phone number.");
+      setError(t('payment.validPhoneNumber'));
       return;
     }
 
@@ -51,7 +53,7 @@ const SupportForm = () => {
 
 
     if (!token) {
-      setError("Please login first.");
+      setError(t('payment.pleaseLoginFirst'));
       return;
     }
 
@@ -98,7 +100,7 @@ const SupportForm = () => {
       console.error(err);
 
       setError(
-        err.message || "Failed to send OTP"
+        err.message || t('payment.failedToSendOtp')
       );
 
     } finally {
@@ -119,7 +121,7 @@ const SupportForm = () => {
 
     if (otp.length !== 6) {
 
-      setError("OTP must be exactly 6 digits.");
+      setError(t('payment.otpMustBe6Digits'));
 
       return;
     }
@@ -131,7 +133,7 @@ const SupportForm = () => {
 
     if (!token) {
 
-      setError("Please login first.");
+      setError(t('payment.pleaseLoginFirst'));
 
       return;
 
@@ -182,7 +184,7 @@ const SupportForm = () => {
       if (!response.ok) {
 
         throw new Error(
-          data.message || "OTP verification failed"
+          data.message || t('payment.otpVerificationFailed')
         );
 
       }
@@ -226,7 +228,7 @@ const SupportForm = () => {
 
 
       setError(
-        err.message || "Verification failed"
+        err.message || t('payment.verificationFailed')
       );
 
 
@@ -268,7 +270,7 @@ const SupportForm = () => {
 
           <h2 className="text-2xl font-bold text-gray-800">
 
-            Payment Verification
+            {t('payment.paymentVerificationTitle')}
 
           </h2>
 
@@ -278,8 +280,8 @@ const SupportForm = () => {
 
             {
               step === "phone"
-              ? "Link your payment account"
-              : "Verify OTP"
+              ? t('payment.linkPaymentAccount')
+              : t('auth.verifyOtpTitle')
             }
 
           </p>
@@ -403,8 +405,8 @@ const SupportForm = () => {
 
                     {
                       loading
-                      ? "Sending OTP..."
-                      : "Send OTP"
+                      ? t('auth.sendingOtp')
+                      : t('payment.sendOtp')
                     }
 
                   </button>
@@ -438,7 +440,7 @@ const SupportForm = () => {
 
             <p className="text-center text-sm">
 
-              OTP sent to <b>{phoneNumber}</b>
+              {t('payment.otpSentToPhone')} <b>{phoneNumber}</b>
 
             </p>
 
@@ -481,8 +483,8 @@ const SupportForm = () => {
 
               {
                 loading
-                ? "Verifying..."
-                :"Verify OTP"
+                ? t('auth.verifying')
+                : t('auth.verifyOtpTitle')
               }
 
 
@@ -506,7 +508,7 @@ const SupportForm = () => {
 
             >
 
-              Change Number
+              {t('payment.changeNumber')}
 
             </button>
 

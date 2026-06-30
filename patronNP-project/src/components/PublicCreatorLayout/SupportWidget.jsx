@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
 import {
   Heart,
   ImagePlus,
@@ -14,12 +13,14 @@ import Button from "../Button";
 import PaymentMethodPicker from "./PaymentMethodPicker";
 import { openModal, closeModal } from "../../utils/jqueryModal";
 import { useCreatorPage } from "../../context/CreatorPageContext";
+import { initiateEsewaTip, redirectToEsewa } from "../../services/esewaService";
+import { initiateKhaltiTip, redirectToKhalti } from "../../services/khaltiService";
 
 const OVERLAY_ID = "support-modal-overlay";
 const PANEL_ID = "support-modal-panel";
 
 const SupportWidget = ({ isOpen, onClose }) => {
-  const { username, displayCreator, loggedIn } = useCreatorPage();
+  const { username, displayCreator } = useCreatorPage();
 
   const [quantity, setQuantity] = useState(1);
   const [customAmount, setCustomAmount] = useState("");
@@ -55,24 +56,36 @@ const SupportWidget = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const handlePay = async () => {
-    if (!loggedIn) {
-      toast.error("Please log in or sign up to support");
-      return;
-    }
     if (!totalAmount || totalAmount < 10) {
       toast.error("Minimum amount is NPR 10");
       return;
     }
+
     setPaying(true);
     try {
-      await new Promise((r) => setTimeout(r, 1200));
-      toast.success(
-        `Redirecting to ${paymentMethod === "ESEWA" ? "eSewa" : "Khalti"}...`
-      );
-      onClose();
+      if (paymentMethod === "ESEWA") {
+        const { formUrl, fields } = await initiateEsewaTip({
+          creatorUsername: username,
+          amount: totalAmount,
+          supporterName,
+          message,
+          isPrivate,
+          isMonthly,
+        });
+        redirectToEsewa({ formUrl, fields });
+      } else {
+        const { paymentUrl } = await initiateKhaltiTip({
+          creatorUsername: username,
+          amount: totalAmount,
+          supporterName,
+          message,
+          isPrivate,
+          isMonthly,
+        });
+        redirectToKhalti(paymentUrl);
+      }
     } catch {
-      toast.error("Payment failed");
-    } finally {
+      toast.error("Payment failed. Please try again.");
       setPaying(false);
     }
   };
@@ -219,29 +232,19 @@ const SupportWidget = ({ isOpen, onClose }) => {
 
           <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
 
-          {loggedIn ? (
-            <Button
-              variant="accent"
-              size="full"
-              onClick={handlePay}
-              isLoading={paying}
-              className="rounded-xl py-3.5"
-            >
-              Pay NPR {totalAmount?.toLocaleString() || "—"}
-              {isMonthly ? "/mo" : ""}
-            </Button>
-          ) : (
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Link to="/signin" state={{ from: `/${username}` }} className="flex-1">
-                <Button size="full" className="rounded-xl">Log in</Button>
-              </Link>
-              <Link to="/signup" className="flex-1">
-                <Button variant="outline" size="full" className="rounded-xl">
-                  Sign up
-                </Button>
-              </Link>
-            </div>
-          )}
+          <Button
+            variant="accent"
+            size="full"
+            onClick={handlePay}
+            isLoading={paying}
+            className="rounded-xl py-3.5"
+          >
+            Pay NPR {totalAmount?.toLocaleString() || "—"}
+            {isMonthly ? "/mo" : ""}
+          </Button>
+          <p className="text-xs text-center text-patron-gray-400">
+            No account needed — pay securely with {paymentMethod === "ESEWA" ? "eSewa" : "Khalti"}
+          </p>
         </div>
       </div>
     </div>

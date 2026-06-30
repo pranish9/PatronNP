@@ -1,10 +1,20 @@
-import { Link, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import Button from "../../components/Button";
+import { useCreatorPage } from "../../context/CreatorPageContext";
 
 const PaymentSuccess = () => {
   const { username: rawUsername } = useParams();
   const username = rawUsername?.replace(/^@/, "");
+  const [searchParams] = useSearchParams();
+  const txn = searchParams.get("txn");
+  const { refreshCreator } = useCreatorPage();
+
+  useEffect(() => {
+    refreshCreator();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-12">
@@ -14,6 +24,9 @@ const PaymentSuccess = () => {
         <p className="text-patron-gray-600 text-sm mt-2">
           Thank you for your support. Your transaction was completed.
         </p>
+        {txn && (
+          <p className="text-patron-gray-400 text-xs mt-1 break-all">Ref: {txn}</p>
+        )}
         <div className="flex flex-col sm:flex-row gap-3 mt-8">
           <Link to={`/${username}`} className="flex-1">
             <Button size="full" className="rounded-xl">

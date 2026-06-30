@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import useThemeStore from "./stores/themeStore";
+import { scheduleAutoLogout, isTokenExpired, logout } from "./utils/authTimer";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -30,8 +31,11 @@ import PaymentFailure from "./pages/CreatorPage/PaymentFailure";
 import PublicCreatorLayout from "./components/PublicCreatorLayout/PublicCreatorLayout";
 
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem("accessToken");
-  return isAuthenticated ? children : <Navigate to="/signin" replace />;
+  const token = localStorage.getItem("accessToken");
+  if (!token || isTokenExpired(token)) {
+    return <Navigate to="/signin" replace />;
+  }
+  return children;
 };
 
 const creatorNestedRoutes = (
@@ -58,6 +62,25 @@ const App = () => {
       document.documentElement.classList.remove("dark");
     }
   }, [isDark]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      if (isTokenExpired(token)) {
+        logout();
+      } else {
+        scheduleAutoLogout();
+      }
+    }
+
+    const onStorage = (e) => {
+      if (e.key === "accessToken") {
+        scheduleAutoLogout();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   return (
     <Routes>

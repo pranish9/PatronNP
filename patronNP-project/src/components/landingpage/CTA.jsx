@@ -1,8 +1,11 @@
 import React from 'react';
 import { ArrowRight, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../../hooks/useLanguage';
 
 const CTA = ({ onSearchOpen }) => {
+  const { t } = useLanguage();
+
   return (
     <section className="py-24 px-4 bg-white">
       <div className="max-w-5xl mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-8 md:p-20 text-center shadow-2xl relative overflow-hidden">
@@ -14,29 +17,29 @@ const CTA = ({ onSearchOpen }) => {
 
         <div className="relative z-10">
           <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
-            Start earning from your <br className="hidden md:block" /> audience today.
+            {t('landing.ctaTitle1')} <br className="hidden md:block" /> {t('landing.ctaTitleBreak')}
           </h2>
-          
+
           <p className="text-emerald-50 text-lg md:text-xl mb-12 max-w-2xl mx-auto font-medium">
-            Join hundreds of Nepali creators turning their passion into real income with a platform built for your growth.
+            {t('landing.ctaSubtitle')}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link 
-              to="/signup" 
+            <Link
+              to="/signup"
               className="group flex items-center gap-2 w-full sm:w-auto px-8 py-4 bg-orange-500 text-white font-bold rounded-full hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-400/30"
             >
-              Become a Creator
+              {t('landing.ctaBecomeCreator')}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
-            
+
             {/* Clickable button to trigger the search */}
-            <button 
+            <button
               onClick={onSearchOpen}
               className="flex items-center gap-2 w-full sm:w-auto px-8 py-4 bg-emerald-700/30 text-white font-bold rounded-full hover:bg-emerald-700/50 transition-all backdrop-blur-sm border border-emerald-400/20"
             >
               <Search size={18} />
-              Explore Creators
+              {t('landing.ctaExploreCreators')}
             </button>
           </div>
         </div>

@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useEffect } from "react";
+import { useLanguage } from "../../hooks/useLanguage";
 
 const OnboardingProfile = () => {
   const navigate = useNavigate();
-  
+  const { t } = useLanguage();
+
 
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +28,12 @@ const OnboardingProfile = () => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error(t('onboarding.selectImageFile'));
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image size must be less than 5MB");
+      toast.error(t('onboarding.imageSizeLimit'));
       return;
     }
 
@@ -62,11 +64,11 @@ const OnboardingProfile = () => {
     e.preventDefault();
 
     if (!profileData.fullName.trim()) {
-      return toast.error("Full name is required");
+      return toast.error(t('onboarding.fullNameRequired'));
     }
 
     if (!profileData.bio.trim()) {
-      return toast.error("Bio is required");
+      return toast.error(t('onboarding.bioRequired'));
     }
 
     try {
@@ -112,14 +114,14 @@ const OnboardingProfile = () => {
       );
 
       toast.success(
-        "Profile completed successfully"
+        t('onboarding.profileCompletedSuccess')
       );
 
       navigate("/payment-setup");
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to save profile"
+          t('onboarding.failedToSaveProfile')
       );
     } finally {
       setLoading(false);
@@ -136,19 +138,19 @@ const OnboardingProfile = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-8">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-8">
       <div className="max-w-3xl w-full">
-        <h1 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-          Complete Your Creator Page
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-8 sm:mb-12 text-center">
+          {t('onboarding.completeCreatorPage')}
         </h1>
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col md:flex-row gap-12"
+          className="flex flex-col md:flex-row gap-8 md:gap-12"
         >
           {/* Profile Picture */}
           <div className="flex flex-col items-center">
-            <div className="w-48 h-48 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-4">
+            <div className="w-32 h-32 sm:w-48 sm:h-48 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mb-4">
               {preview ? (
                 <img
                   src={preview}
@@ -171,7 +173,7 @@ const OnboardingProfile = () => {
             </div>
 
             <label className="cursor-pointer border border-gray-300 px-4 py-2 rounded-full hover:bg-gray-50 transition">
-              Upload Profile Photo
+              {t('onboarding.uploadProfilePhoto')}
 
               <input
                 type="file"
@@ -182,7 +184,7 @@ const OnboardingProfile = () => {
             </label>
 
             <p className="text-xs text-gray-500 mt-2">
-              JPG, PNG • Max 5MB
+              {t('onboarding.jpgPngMax5mb')}
             </p>
           </div>
 
@@ -190,7 +192,7 @@ const OnboardingProfile = () => {
           <div className="flex-1 space-y-6">
             <div>
               <label className="block text-sm font-semibold mb-2">
-                Full Name
+                {t('onboarding.fullName')}
               </label>
 
               <input
@@ -198,14 +200,14 @@ const OnboardingProfile = () => {
                 name="fullName"
                 value={profileData.fullName}
                 onChange={handleInputChange}
-                placeholder="Your full name"
+                placeholder={t('onboarding.yourFullName')}
                 className="w-full bg-gray-100 p-3 rounded-lg outline-none"
               />
             </div>
 
             <div>
               <label className="block text-sm font-semibold mb-2">
-                About You
+                {t('onboarding.aboutYou')}
               </label>
 
               <textarea
@@ -213,7 +215,7 @@ const OnboardingProfile = () => {
                 value={profileData.bio}
                 onChange={handleInputChange}
                 maxLength={500}
-                placeholder="Tell supporters about yourself and what you're creating..."
+                placeholder={t('onboarding.bioPlaceholder')}
                 className="w-full bg-gray-100 p-3 rounded-lg outline-none h-32 resize-none"
               />
 
@@ -224,7 +226,7 @@ const OnboardingProfile = () => {
 
             <div>
               <label className="block text-sm font-semibold mb-2">
-                Website or Social Link
+                {t('onboarding.websiteOrSocialLink')}
               </label>
 
               <input
@@ -243,8 +245,8 @@ const OnboardingProfile = () => {
               className="bg-black text-white px-8 py-3 rounded-lg font-bold hover:bg-gray-800 transition disabled:opacity-50"
             >
               {loading
-                ? "Saving Profile..."
-                : "Continue"}
+                ? t('onboarding.savingProfile')
+                : t('common.continue')}
             </button>
           </div>
         </form>

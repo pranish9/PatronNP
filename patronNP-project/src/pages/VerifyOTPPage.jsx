@@ -4,10 +4,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import AuthLayout from "../components/auth/AuthLayout";
+import { scheduleAutoLogout } from "../utils/authTimer";
+import { useLanguage } from "../hooks/useLanguage";
 
 const VerifyOTPPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
 
   const { username, email, password } = location.state || {};
 
@@ -39,7 +42,7 @@ const VerifyOTPPage = () => {
     setError("");
 
     if (otp.length !== 6) {
-      setError("Please enter a valid 6 digit OTP");
+      setError(t('auth.enterValid6DigitOtp'));
       return;
     }
 
@@ -63,15 +66,16 @@ const VerifyOTPPage = () => {
       localStorage.setItem("username", user.username);
       localStorage.setItem("email", user.email);
       localStorage.setItem("role", user.role);
+      scheduleAutoLogout();
 
-      toast.success("Account created successfully");
+      toast.success(t('auth.signUpSuccess'));
 
       navigate("/onboarding");
     } catch (err) {
       const message =
         err.response?.data?.message ||
         err.response?.data ||
-        "Invalid OTP";
+        t('auth.invalidOtp');
 
       setError(message);
       toast.error(message);
@@ -93,7 +97,7 @@ const VerifyOTPPage = () => {
         }
       );
 
-      toast.success("OTP sent successfully");
+      toast.success(t('auth.otpSentSuccess'));
 
       setTimer(60);
       setOtp("");
@@ -101,7 +105,7 @@ const VerifyOTPPage = () => {
       const message =
         err.response?.data?.message ||
         err.response?.data ||
-        "Failed to resend OTP";
+        t('auth.failedToResendOtp');
 
       setError(message);
       toast.error(message);
@@ -124,14 +128,14 @@ const VerifyOTPPage = () => {
           </button>
 
           <h1 className="text-2xl font-bold">
-            Verify Email
+            {t('auth.verifyEmailTitle')}
           </h1>
         </div>
 
         {/* Email Info */}
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-5">
           <p className="text-sm text-green-700 text-center">
-            Verification code sent to
+            {t('auth.verificationCodeSentTo')}
           </p>
 
           <p className="font-semibold text-center mt-1 break-all">
@@ -142,7 +146,7 @@ const VerifyOTPPage = () => {
         {/* OTP Input */}
         <div className="mb-4">
           <label className="block mb-2 text-sm font-medium">
-            Enter OTP
+            {t('auth.enterOTP')}
           </label>
 
           <input
@@ -189,7 +193,7 @@ const VerifyOTPPage = () => {
           {timer > 0 ? (
             <>
               <p className="text-sm text-blue-700 mb-2">
-                Resend available in
+                {t('auth.resendAvailableInLabel')}
               </p>
 
               <p className="text-3xl font-bold text-blue-600">
@@ -200,7 +204,7 @@ const VerifyOTPPage = () => {
           ) : (
             <>
               <p className="text-sm mb-3 text-blue-700">
-                Didn't receive the code?
+                {t('auth.didntReceiveCode')}
               </p>
 
               <button
@@ -208,7 +212,7 @@ const VerifyOTPPage = () => {
                 disabled={loading}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
               >
-                Resend OTP
+                {t('auth.resendOTP')}
               </button>
             </>
           )}
@@ -227,15 +231,15 @@ const VerifyOTPPage = () => {
           {loading ? (
             <span className="flex justify-center items-center gap-2">
               <Loader size={18} className="animate-spin" />
-              Verifying...
+              {t('auth.verifying')}
             </span>
           ) : (
-            "Create Account"
+            t('auth.createAccount')
           )}
         </button>
 
         <p className="text-xs text-center text-gray-500 mt-6">
-          Your information is securely protected.
+          {t('auth.infoSecure')}
         </p>
       </div>
     </AuthLayout>
