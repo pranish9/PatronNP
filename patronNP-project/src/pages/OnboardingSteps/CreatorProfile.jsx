@@ -10,12 +10,12 @@ import {
   Pencil,
   Coffee,
   X,
+  HelpCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "../../components/Button";
 import PaymentMethodPicker from "../../components/PublicCreatorLayout/PaymentMethodPicker";
-import SupportButton from "../../components/creatorLayout/RightSidebar";
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "../CreatorPage/UserNotFound";
 import { getCreatorPosts } from "../../data/creatorMockData";
@@ -50,12 +50,10 @@ const CreatorProfile = () => {
 
   useEffect(() => {
     if (!username) return;
-    setSupporters([]);
-    setSupportersPage(0);
-    setHasMoreSupporters(false);
     getRecentSupporters(username, 0, SUPPORTERS_PAGE_SIZE)
       .then((data) => {
         setSupporters(data.content || []);
+        setSupportersPage(0);
         setHasMoreSupporters(!data.last);
       })
       .catch(() => setSupporters([]));
@@ -90,7 +88,10 @@ const CreatorProfile = () => {
 
   const c = displayCreator;
   const unitPrice = c.supportUnitPrice || c.defaultSupportAmount || 100;
-  const unitLabel = c.supportUnitLabel || "tea";
+  const unitLabel = c.supportUnitLabel || "coffee";
+  const unitEmoji = c.supportUnitEmoji || "☕";
+  const buttonWording = c.buttonWording || "Support";
+  const isSuggestedLayout = c.layoutType === "SUGGESTED";
   const totalAmount = customAmount
     ? parseInt(customAmount, 10)
     : unitPrice * quantity;
@@ -387,112 +388,119 @@ const CreatorProfile = () => {
           <aside className="lg:col-span-1">
             <div
               id="support-section"
-              className="bg-patron-white rounded-2xl border border-patron-gray-200 p-5 sm:p-6 shadow-sm sticky top-20"
+              className="bg-patron-white rounded-3xl border border-patron-gray-200 p-5 sm:p-6 shadow-sm sticky top-20"
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-8 h-8 rounded-full bg-patron-orange-50 text-patron-orange-500 flex items-center justify-center text-base">
-                  ☕
-                </span>
-                <h2 className="font-bold text-patron-black">
+              <div className="flex items-center gap-2 mb-5">
+                <h2 className="text-lg font-bold text-patron-black">
                   Buy {c.displayName?.split(" ")[0]} a {unitLabel}
                 </h2>
-              </div>
-              <p className="text-sm text-patron-gray-500 mb-4">
-                It's a friendly gesture — each {unitLabel} is NPR {unitPrice}, buy as
-                many as you like.
-              </p>
-
-              <div className="flex items-center justify-center gap-4 mb-4 py-3 bg-patron-gray-50 rounded-xl border border-patron-gray-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuantity((q) => Math.max(1, q - 1));
-                    setCustomAmount("");
-                  }}
-                  className="w-8 h-8 rounded-full bg-patron-white border border-patron-gray-200 text-patron-gray-700 font-bold hover:bg-patron-green-100 disabled:opacity-40"
-                  disabled={!!customAmount}
-                >
-                  −
-                </button>
-                <span className="flex items-center gap-1.5 text-lg font-bold text-patron-black tabular-nums">
-                  <span aria-hidden>☕</span>
-                  {customAmount ? "—" : quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuantity((q) => q + 1);
-                    setCustomAmount("");
-                  }}
-                  className="w-8 h-8 rounded-full bg-patron-white border border-patron-gray-200 text-patron-gray-700 font-bold hover:bg-patron-green-100 disabled:opacity-40"
-                  disabled={!!customAmount}
-                >
-                  +
-                </button>
+                <HelpCircle
+                  size={16}
+                  className="text-patron-gray-400 shrink-0"
+                  title={`It's a friendly gesture — each ${unitLabel} is NPR ${unitPrice}, buy as many as you like.`}
+                />
               </div>
 
-              <div className="flex gap-2 mb-3">
-                {[1, 3, 5].map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => {
-                      setQuantity(q);
-                      setCustomAmount("");
-                    }}
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold ${
-                      quantity === q && !customAmount
-                        ? "bg-patron-green-600 text-white"
-                        : "bg-patron-gray-100 text-patron-gray-700 hover:bg-patron-green-100"
-                    }`}
-                  >
-                    {q} ☕
-                  </button>
-                ))}
-              </div>
+              {!isSuggestedLayout ? (
+                /* Standard view: quantity picker */
+                <div className="flex items-center gap-3 mb-4 p-3 bg-patron-orange-50/60 rounded-2xl border border-patron-orange-100">
+                  <span className="w-11 h-11 rounded-full bg-patron-white shadow-sm flex items-center justify-center text-xl shrink-0">
+                    {unitEmoji}
+                  </span>
+                  <span className="text-patron-gray-400 font-bold shrink-0">×</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {[1, 3, 5, 10].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => {
+                          setQuantity(q);
+                          setCustomAmount("");
+                        }}
+                        className={`w-9 h-9 rounded-full text-sm font-bold flex items-center justify-center border-2 transition-colors ${
+                          quantity === q && !customAmount
+                            ? "bg-patron-orange-500 border-patron-orange-500 text-patron-white"
+                            : "bg-patron-white border-patron-orange-200 text-patron-orange-500 hover:border-patron-orange-400"
+                        }`}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Suggested amounts view */
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 p-3 bg-patron-gray-100 rounded-2xl mb-2">
+                    <span className="text-patron-gray-500 font-semibold shrink-0">NPR</span>
+                    <input
+                      type="number"
+                      min="10"
+                      placeholder="Enter amount"
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                      className="flex-1 bg-transparent text-sm font-semibold text-patron-black focus:outline-none placeholder:text-patron-gray-400 placeholder:font-normal"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {[50, 100, 250].map((inc) => (
+                      <button
+                        key={inc}
+                        type="button"
+                        onClick={() =>
+                          setCustomAmount((prev) => String((parseInt(prev, 10) || 0) + inc))
+                        }
+                        className="px-3 py-1.5 rounded-full text-xs font-semibold bg-patron-white border border-patron-gray-200 text-patron-gray-600 hover:border-patron-orange-300 hover:text-patron-orange-600"
+                      >
+                        +{inc}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <input
                 type="text"
-                placeholder="Name or @yoursocial (optional)"
+                placeholder="Name or @yoursocial"
                 value={supporterName}
                 onChange={(e) => setSupporterName(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl mb-3 focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+                className="w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl mb-3 focus:outline-none focus:ring-2 focus:ring-patron-green-500/30 placeholder:text-patron-gray-400"
               />
 
               <textarea
-                placeholder="Say something nice (optional)"
+                placeholder="Say something nice..."
                 value={supportMessage}
                 onChange={(e) => setSupportMessage(e.target.value)}
-                rows={2}
-                className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl mb-4 resize-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+                rows={3}
+                className="w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl mb-3 resize-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30 placeholder:text-patron-gray-400"
               />
 
-              <input
-                type="number"
-                min="10"
-                placeholder="Custom NPR amount"
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
-              />
+              {!isSuggestedLayout && (
+                <input
+                  type="number"
+                  min="10"
+                  placeholder="Or enter a custom NPR amount"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  className="w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl mb-4 focus:outline-none focus:ring-2 focus:ring-patron-green-500/30 placeholder:text-patron-gray-400"
+                />
+              )}
 
-              <div className="space-y-2">
-                <Button
-                  variant="accent"
-                  size="full"
-                  onClick={handleSupportClick}
-                  className="rounded-xl py-3"
-                >
-                  Support NPR {totalAmount?.toLocaleString() || "—"}
-                </Button>
-                <button
-                  type="button"
-                  onClick={() => setSupportModalOpen(true)}
-                  className="w-full text-center text-xs text-patron-green-700 hover:underline py-1"
-                >
-                  Full support form (photo, video, private)
-                </button>
-              </div>
+              <Button
+                variant="accent"
+                size="full"
+                onClick={handleSupportClick}
+                className={`rounded-full py-3.5 text-base font-bold shadow-md hover:shadow-lg ${isSuggestedLayout ? "mt-1" : ""}`}
+              >
+                {buttonWording} NPR {totalAmount?.toLocaleString() || "—"}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setSupportModalOpen(true)}
+                className="w-full text-center text-xs text-patron-green-700 hover:underline py-2.5 mt-1"
+              >
+                Full support form (photo, video, private)
+              </button>
             </div>
           </aside>
         )}

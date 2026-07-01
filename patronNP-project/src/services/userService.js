@@ -30,10 +30,16 @@ export const userService = {
   
   getCreatorStats: () =>
     apiClient.get('/creator/stats'),
-  
+
+  getCreatorSettings: () =>
+    apiClient.get('/creator/settings'),
+
+  updateCreatorSettings: (settings) =>
+    apiClient.put('/creator/settings', settings),
+
   getSupporters: () =>
     apiClient.get('/creator/supporters'),
-  
+
   getAnalytics: (range = '30d') =>
     apiClient.get(`/creator/analytics?range=${range}`),
 };

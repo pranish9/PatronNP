@@ -12,7 +12,7 @@ const TipPaymentSuccess = () => {
   const txn = searchParams.get("txn");
   const amount = searchParams.get("amount");
   const provider = searchParams.get("provider");
-  const { refreshCreator } = useCreatorPage();
+  const { refreshCreator, displayCreator } = useCreatorPage();
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -26,6 +26,11 @@ const TipPaymentSuccess = () => {
         <Heart className="mx-auto text-patron-orange-500 mb-4" size={56} fill="currentColor" />
         <h1 className="text-2xl font-bold text-patron-black">{t('creator.supportThankYou')}</h1>
         <p className="text-patron-gray-600 text-sm mt-2">{t('creator.supportThankYouDesc')}</p>
+        {displayCreator?.thankYouMessage && (
+          <p className="text-patron-black text-sm font-medium mt-4 p-3 bg-patron-green-50 rounded-xl border border-patron-green-100 whitespace-pre-wrap">
+            {displayCreator.thankYouMessage}
+          </p>
+        )}
         {amount && provider && (
           <p className="text-patron-gray-700 text-sm font-semibold mt-3">
             {t('creator.supportAmountPaid', { amount: Number(amount).toLocaleString(), provider })}

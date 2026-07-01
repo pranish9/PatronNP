@@ -13,6 +13,7 @@ import Explore from "./pages/Explore";
 import Layout from "./components/creatorLayout/Layout";
 // Protected Pages
 import Dashboard from "./pages/Dashboard";
+import Supporters from "./pages/Supporters";
 import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
 import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
 import ExploreCreator from "./pages/CreatorPage/ExploreCreator";
@@ -129,6 +130,14 @@ const App = () => {
         element={
           <ProtectedRoute>
             <Integrations />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/supporters"
+        element={
+          <ProtectedRoute>
+            <Supporters />
           </ProtectedRoute>
         }
       />
