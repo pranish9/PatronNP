@@ -15,3 +15,16 @@ export const searchCreators = async (query, page = 0, size = PAGE_SIZE) => {
   });
   return data;
 };
+
+/**
+ * Fetch creators ranked by supporter count, paginated.
+ * @param {number} page
+ * @param {number} size
+ * @returns {Promise<{content: Array, last: boolean, totalElements: number}>}
+ */
+export const getTopCreators = async (page = 0, size = 10) => {
+  const { data } = await apiClient.get("/creators/top", {
+    params: { page, size },
+  });
+  return data;
+};

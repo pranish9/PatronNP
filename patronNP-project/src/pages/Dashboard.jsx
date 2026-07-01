@@ -23,6 +23,8 @@ export const Dashboard = () => {
   const [transactions, setTransactions] = useState([])
   const [totalEarnings, setTotalEarnings] = useState(0)
   const [loadingTransactions, setLoadingTransactions] = useState(true)
+  const TRANSACTIONS_PAGE_SIZE = 6
+  const [visibleTransactionsCount, setVisibleTransactionsCount] = useState(TRANSACTIONS_PAGE_SIZE)
 
   const username = localStorage.getItem("username") || ""
   const storedUser = (() => {
@@ -183,7 +185,7 @@ export const Dashboard = () => {
                   <h4 className="text-sm font-bold text-gray-900">{t('dashboard.recentTransactions')}</h4>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {transactions.slice(0, 10).map((txn) => {
+                  {transactions.slice(0, visibleTransactionsCount).map((txn) => {
                     const categoryIcon =
                       txn.category === "SHOP" ? (
                         <ShoppingBag size={14} />
@@ -245,6 +247,19 @@ export const Dashboard = () => {
                     )
                   })}
                 </div>
+                {visibleTransactionsCount < transactions.length && (
+                  <div className="text-center py-3 border-t border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleTransactionsCount((c) => c + TRANSACTIONS_PAGE_SIZE)
+                      }
+                      className="px-4 py-2 text-sm font-medium text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-50"
+                    >
+                      {t('dashboard.loadMore') || 'Load more'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

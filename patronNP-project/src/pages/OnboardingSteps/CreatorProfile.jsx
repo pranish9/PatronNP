@@ -43,13 +43,38 @@ const CreatorProfile = () => {
   const [donating, setDonating] = useState(false);
   const [paymentPopupOpen, setPaymentPopupOpen] = useState(false);
   const [supporters, setSupporters] = useState([]);
+  const [supportersPage, setSupportersPage] = useState(0);
+  const [hasMoreSupporters, setHasMoreSupporters] = useState(false);
+  const [loadingMoreSupporters, setLoadingMoreSupporters] = useState(false);
+  const SUPPORTERS_PAGE_SIZE = 4;
 
   useEffect(() => {
     if (!username) return;
-    getRecentSupporters(username, 0, 10)
-      .then((data) => setSupporters(data.content || []))
+    setSupporters([]);
+    setSupportersPage(0);
+    setHasMoreSupporters(false);
+    getRecentSupporters(username, 0, SUPPORTERS_PAGE_SIZE)
+      .then((data) => {
+        setSupporters(data.content || []);
+        setHasMoreSupporters(!data.last);
+      })
       .catch(() => setSupporters([]));
   }, [username]);
+
+  const handleLoadMoreSupporters = async () => {
+    const nextPage = supportersPage + 1;
+    setLoadingMoreSupporters(true);
+    try {
+      const data = await getRecentSupporters(username, nextPage, SUPPORTERS_PAGE_SIZE);
+      setSupporters((prev) => [...prev, ...(data.content || [])]);
+      setSupportersPage(nextPage);
+      setHasMoreSupporters(!data.last);
+    } catch {
+      setHasMoreSupporters(false);
+    } finally {
+      setLoadingMoreSupporters(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -296,6 +321,18 @@ const CreatorProfile = () => {
                     </span>
                   </div>
                 ))}
+              </div>
+            )}
+            {hasMoreSupporters && (
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={handleLoadMoreSupporters}
+                  disabled={loadingMoreSupporters}
+                  className="px-4 py-2 text-sm font-medium text-patron-green-700 border border-patron-green-200 rounded-xl hover:bg-patron-green-50 disabled:opacity-50"
+                >
+                  {loadingMoreSupporters ? "Loading..." : "Load more"}
+                </button>
               </div>
             )}
           </section>
