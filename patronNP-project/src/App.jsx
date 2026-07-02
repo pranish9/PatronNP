@@ -14,6 +14,10 @@ import Layout from "./components/creatorLayout/Layout";
 // Protected Pages
 import Dashboard from "./pages/Dashboard";
 import Supporters from "./pages/Supporters";
+import Shop from "./pages/Shop";
+import ShopProductForm from "./pages/ShopProductForm";
+import ShopDiscountForm from "./pages/ShopDiscountForm";
+import AccountPage from "./pages/AccountPage";
 import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
 import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
 import ExploreCreator from "./pages/CreatorPage/ExploreCreator";
@@ -138,6 +142,47 @@ const App = () => {
         element={
           <ProtectedRoute>
             <Supporters />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/shop"
+        element={
+          <ProtectedRoute>
+            <Shop />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shop/new"
+        element={
+          <ProtectedRoute>
+            <ShopProductForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shop/:id/edit"
+        element={
+          <ProtectedRoute>
+            <ShopProductForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shop/discounts/new"
+        element={
+          <ProtectedRoute>
+            <ShopDiscountForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/account"
+        element={
+          <ProtectedRoute>
+            <AccountPage />
           </ProtectedRoute>
         }
       />

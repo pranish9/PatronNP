@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import AuthLayout from "../components/auth/AuthLayout";
 import { scheduleAutoLogout } from "../utils/authTimer";
 import { useLanguage } from "../hooks/useLanguage";
+import { API_HOST } from "../utils/apiHost";
 
 const VerifyOTPPage = () => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ const VerifyOTPPage = () => {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:8080/auth/verify-otp-register",
+        `${API_HOST}/auth/verify-otp-register`,
         {
           username,
           email,
@@ -91,7 +92,7 @@ const VerifyOTPPage = () => {
       setError("");
 
       await axios.post(
-        "http://localhost:8080/auth/send-otp",
+        `${API_HOST}/auth/send-otp`,
         {
           email,
         }

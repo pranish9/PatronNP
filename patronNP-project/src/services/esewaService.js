@@ -1,11 +1,14 @@
 import apiClient from "./apiClient";
 
-export const initiateEsewaPayment = async ({ creatorUsername, amount, buyerEmail, buyerPhone }) => {
+export const initiateEsewaPayment = async ({ creatorUsername, amount, buyerEmail, buyerPhone, items, discountCode }) => {
   const { data } = await apiClient.post("/payment/esewa/initiate", {
     creatorUsername,
     amount,
     buyerEmail,
     buyerPhone,
+    items,
+    discountCode,
+    frontendOrigin: window.location.origin,
   });
   return data;
 };
@@ -29,6 +32,7 @@ export const initiateEsewaTip = async ({
     isMonthly,
     buyerEmail,
     buyerPhone,
+    frontendOrigin: window.location.origin,
   });
   return data;
 };

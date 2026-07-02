@@ -69,39 +69,85 @@ export const Dashboard = () => {
     { supportersAmount: 0, membershipAmount: 0, shopAmount: 0 }
   )
 
-  // Real chart data: daily total of successful earnings, grouped from actual transactions
-  const dailyTotals = successfulTransactions.reduce((acc, t) => {
-    const day = new Date(t.createdAt).toLocaleDateString("en-NP", { month: "short", day: "numeric" })
-    acc[day] = (acc[day] || 0) + (t.amount || 0)
-    return acc
-  }, {})
-
-  const sortedDays = Object.keys(dailyTotals).sort(
-    (a, b) => new Date(a) - new Date(b)
+  // Real chart data: daily totals per category, grouped from actual transactions
+  const dailyTotalsByCategory = successfulTransactions.reduce(
+    (acc, t) => {
+      const day = new Date(t.createdAt).toLocaleDateString("en-NP", { month: "short", day: "numeric" })
+      const category = t.category === "SHOP" || t.category === "MEMBERSHIP" ? t.category : "TIP"
+      acc[category][day] = (acc[category][day] || 0) + (t.amount || 0)
+      return acc
+    },
+    { TIP: {}, MEMBERSHIP: {}, SHOP: {} }
   )
+
+  const sortedDays = Object.keys({
+    ...dailyTotalsByCategory.TIP,
+    ...dailyTotalsByCategory.MEMBERSHIP,
+    ...dailyTotalsByCategory.SHOP,
+  }).sort((a, b) => new Date(a) - new Date(b))
 
   const chartData = {
     labels: sortedDays,
     datasets: [
       {
         fill: true,
-        label: t('creator.earnings'),
-        data: sortedDays.map((d) => dailyTotals[d]),
-        borderColor: '#10b981', // Emerald green brand color
-        backgroundColor: 'rgba(16, 185, 129, 0.05)',
+        label: t('dashboard.supportersLabel'),
+        data: sortedDays.map((d) => dailyTotalsByCategory.TIP[d] || 0),
+        borderColor: '#fde047', // light yellow — supporter tips
+        backgroundColor: 'rgba(253, 224, 71, 0.12)',
+        pointBackgroundColor: '#fde047',
         tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBorderWidth: 0,
+      },
+      {
+        fill: true,
+        label: t('dashboard.membershipLabel'),
+        data: sortedDays.map((d) => dailyTotalsByCategory.MEMBERSHIP[d] || 0),
+        borderColor: '#f9a8d4', // baby pink — membership
+        backgroundColor: 'rgba(249, 168, 212, 0.12)',
+        pointBackgroundColor: '#f9a8d4',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBorderWidth: 0,
+      },
+      {
+        fill: true,
+        label: t('dashboard.shopLabel'),
+        data: sortedDays.map((d) => dailyTotalsByCategory.SHOP[d] || 0),
+        borderColor: '#7dd3fc', // light blue — shop
+        backgroundColor: 'rgba(125, 211, 252, 0.12)',
+        pointBackgroundColor: '#7dd3fc',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBorderWidth: 0,
       },
     ],
   }
 
-  const chartMax = Math.max(...sortedDays.map((d) => dailyTotals[d]), 100)
+  const chartMax = Math.max(
+    ...sortedDays.flatMap((d) => [
+      dailyTotalsByCategory.TIP[d] || 0,
+      dailyTotalsByCategory.MEMBERSHIP[d] || 0,
+      dailyTotalsByCategory.SHOP[d] || 0,
+    ]),
+    100
+  )
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
+      tooltip: { mode: 'index', intersect: false },
     },
+    interaction: { mode: 'index', intersect: false },
     scales: {
       y: { min: 0, max: chartMax * 1.2, ticks: { stepSize: Math.ceil(chartMax / 5) || 1 } },
       x: { grid: { display: false } }
@@ -151,9 +197,9 @@ export const Dashboard = () => {
 
               {/* Minimalist Legend Pills — real category totals from successful transactions */}
               <div className="flex flex-wrap gap-4 text-xs font-medium text-gray-500">
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-amber-200"></span> NPR {stats.supportersAmount.toLocaleString()} {t('dashboard.supportersLabel')}</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-pink-200"></span> NPR {stats.membershipAmount.toLocaleString()} {t('dashboard.membershipLabel')}</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-cyan-200"></span> NPR {stats.shopAmount.toLocaleString()} {t('dashboard.shopLabel')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-yellow-300"></span> NPR {stats.supportersAmount.toLocaleString()} {t('dashboard.supportersLabel')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-pink-300"></span> NPR {stats.membershipAmount.toLocaleString()} {t('dashboard.membershipLabel')}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-sky-300"></span> NPR {stats.shopAmount.toLocaleString()} {t('dashboard.shopLabel')}</span>
               </div>
 
               {/* Dynamic Chart Area — real daily earnings from successful transactions */}

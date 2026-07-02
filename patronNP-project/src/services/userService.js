@@ -8,9 +8,23 @@ export const userService = {
       "Content-Type": "multipart/form-data",
     },
   }),
-  updateProfile: (data) =>
-    apiClient.put('/users/profile', data),
-  
+  updateProfile: ({ name, country, timezone, photo }) => {
+    const formData = new FormData();
+    if (name != null) formData.append('name', name);
+    if (country != null) formData.append('country', country);
+    if (timezone != null) formData.append('timezone', timezone);
+    if (photo) formData.append('photo', photo);
+    return apiClient.put('/users/profile', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  changePassword: (newPassword, confirmPassword) =>
+    apiClient.put('/users/password', { newPassword, confirmPassword }),
+
+  deleteAccount: () => apiClient.delete('/users/account'),
+
+
   completeOnboarding: (data) =>
     apiClient.post('/users/onboarding/complete', data),
   

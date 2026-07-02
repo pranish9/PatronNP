@@ -1,11 +1,14 @@
 import apiClient from "./apiClient";
 
-export const initiateKhaltiPayment = async ({ creatorUsername, amount, buyerEmail, buyerPhone }) => {
+export const initiateKhaltiPayment = async ({ creatorUsername, amount, buyerEmail, buyerPhone, items, discountCode }) => {
   const { data } = await apiClient.post("/payment/khalti/initiate", {
     creatorUsername,
     amount,
     buyerEmail,
     buyerPhone,
+    items,
+    discountCode,
+    frontendOrigin: window.location.origin,
   });
   return data;
 };
@@ -29,6 +32,7 @@ export const initiateKhaltiTip = async ({
     isMonthly,
     buyerEmail,
     buyerPhone,
+    frontendOrigin: window.location.origin,
   });
   return data;
 };

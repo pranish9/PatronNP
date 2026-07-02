@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useLanguage } from "../../hooks/useLanguage";
+import { API_HOST } from "../../utils/apiHost";
 
 const SupportForm = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const SupportForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const API_BASE = "http://localhost:8080/api/payment";
+  const API_BASE = `${API_HOST}/api/payment`;
 
 
   // Redirect if already verified

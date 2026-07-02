@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { scheduleAutoLogout } from "../utils/authTimer";
 import { useLanguage } from "../hooks/useLanguage";
 import LanguageSwitcher from "../components/LanguageSwitcher";
+import { API_HOST } from "../utils/apiHost";
 
 const OTP_TIME = 60;
 
@@ -65,7 +66,7 @@ const googleLogin = useGoogleLogin({
       setError("");
 
       const { data } = await axios.post(
-        "http://localhost:8080/auth/google-login",
+        `${API_HOST}/auth/google-login`,
         {
           token: tokenResponse.access_token,
         }
@@ -119,7 +120,7 @@ const googleLogin = useGoogleLogin({
       setLoading(true);
 
       await axios.post(
-        "http://localhost:8080/auth/send-login-otp",
+        `${API_HOST}/auth/send-login-otp`,
         {
           email,
         }
@@ -152,7 +153,7 @@ const googleLogin = useGoogleLogin({
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:8080/auth/verify-login-otp",
+        `${API_HOST}/auth/verify-login-otp`,
         {
           email,
           otp,

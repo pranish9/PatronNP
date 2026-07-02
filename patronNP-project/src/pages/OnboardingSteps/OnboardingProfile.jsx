@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useEffect } from "react";
 import { useLanguage } from "../../hooks/useLanguage";
+import { API_HOST } from "../../utils/apiHost";
 
 const OnboardingProfile = () => {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ const OnboardingProfile = () => {
         localStorage.getItem("accessToken");
 
       await axios.post(
-        "http://localhost:8080/api/profile/save",
+        `${API_HOST}/api/profile/save`,
         formData,
         {
           headers: {

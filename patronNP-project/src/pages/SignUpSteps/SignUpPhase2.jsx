@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { scheduleAutoLogout } from "../../utils/authTimer";
 import { useLanguage } from "../../hooks/useLanguage";
+import { API_HOST } from "../../utils/apiHost";
 
 const SignUpPhase2 = ({ onPrev, formData }) => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
         setError("");
 
         const res = await axios.post(
-          "http://localhost:8080/auth/google-signup",
+          `${API_HOST}/auth/google-signup`,
           {
             username,
             token: tokenResponse.access_token,
@@ -117,7 +118,7 @@ const SignUpPhase2 = ({ onPrev, formData }) => {
     try {
       setLoading(true);
 
-      await axios.post("http://localhost:8080/auth/send-otp", {
+      await axios.post(`${API_HOST}/auth/send-otp`, {
         email,
       });
 

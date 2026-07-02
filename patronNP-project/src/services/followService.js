@@ -19,3 +19,10 @@ export const getFollowing = async (page = 0, size = 10) => {
   });
   return data;
 };
+
+export const getFollowers = async (page = 0, size = 10) => {
+  const { data } = await apiClient.get("/follow/followers", {
+    params: { page, size },
+  });
+  return data;
+};

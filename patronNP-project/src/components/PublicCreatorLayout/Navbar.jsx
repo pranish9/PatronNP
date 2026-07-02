@@ -258,6 +258,17 @@ const Navbar = ({ username, onLogout }) => {
             ))}
 
           {userState === "creator" && (
+            <Link
+              to="/dashboard"
+              onClick={() => setMobileNavOpen(false)}
+              className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium text-patron-green-700"
+            >
+              <LayoutDashboard size={18} />
+              Dashboard
+            </Link>
+          )}
+
+          {userState === "creator" && (
             <button
               onClick={() => {
                 setMobileNavOpen(false);

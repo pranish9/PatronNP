@@ -5,6 +5,7 @@ import SockJS from "sockjs-client";
 import { Coffee } from "lucide-react";
 
 import { getPublicStreamAlertSettings } from "../services/streamAlertService";
+import { API_HOST } from "../utils/apiHost";
 
 const POSITION_CLASSES = {
   TOP_LEFT: "top-6 left-6 items-start text-left",
@@ -36,7 +37,7 @@ const StreamAlertOverlay = () => {
   useEffect(() => {
     if (!userKey) return;
 
-    const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:8080/api").replace(/\/api\/?$/, "");
+    const apiBase = (import.meta.env.VITE_API_URL || `${API_HOST}/api`).replace(/\/api\/?$/, "");
 
     const client = new Client({
       webSocketFactory: () => new SockJS(`${apiBase}/ws`),

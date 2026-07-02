@@ -4,14 +4,24 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, LayoutDashboard, Search, Heart, Lock, ShoppingBag,
   PenTool, ChevronDown, ChevronUp, FileText, Image,
-  Code, Settings as SettingsIcon, Menu, X
+  Code, Settings as SettingsIcon, Menu, X, UserCircle, LogOut
 } from 'lucide-react';
+
+import useAuthStore from '../../stores/authStore';
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
   const username = localStorage.getItem("username");
-  
+
+  const handleLogout = () => {
+    logout();
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/signin", { replace: true });
+  };
+
 
   const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -39,6 +49,7 @@ const Sidebar = () => {
   ];
 
   const settingsItems = [
+    { name: 'My account', icon: UserCircle, path: '/account' },
     { name: 'Integrations', icon: Code, path: '/integrations' },
     { name: 'Settings', icon: SettingsIcon, path: '/settings' },
   ];
@@ -157,6 +168,15 @@ const Sidebar = () => {
               <NavItem key={item.path} item={item} />
             ))}
           </div>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-2 rounded-xl cursor-pointer transition-colors text-red-600 hover:bg-red-50 text-left"
+          >
+            <LogOut size={20} />
+            <span className="font-medium">Log out</span>
+          </button>
 
         </div>
       </aside>

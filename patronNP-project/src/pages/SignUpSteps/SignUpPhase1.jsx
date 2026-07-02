@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Check, X, AlertCircle, Loader } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
+import { API_HOST } from "../../utils/apiHost";
 
 const SignUpPhase1 = ({ onNext, formData, setFormData }) => {
   const { t } = useLanguage();
@@ -40,7 +41,7 @@ const SignUpPhase1 = ({ onNext, formData, setFormData }) => {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/auth/check-username?username=${value}`
+        `${API_HOST}/auth/check-username?username=${value}`
       );
 
       const data = await res.json();
