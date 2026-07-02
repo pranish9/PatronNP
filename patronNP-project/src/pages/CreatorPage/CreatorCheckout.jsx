@@ -91,6 +91,10 @@ const CreatorCheckout = () => {
       toast.error("Email is required");
       return;
     }
+    if (!phone.trim()) {
+      toast.error("Phone number is required");
+      return;
+    }
 
     setPaying(true);
     const cartItems = items.map((i) => ({ productId: i.id, quantity: i.quantity }));
@@ -221,13 +225,15 @@ const CreatorCheckout = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Email address *"
+                  required
                   className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
                 />
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Phone number (optional)"
+                  placeholder="Phone number *"
+                  required
                   className="w-full px-3 py-2.5 text-sm border border-patron-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
                 />
               </div>

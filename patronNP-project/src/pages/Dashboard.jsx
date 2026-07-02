@@ -356,7 +356,10 @@ export const Dashboard = () => {
                   <h4 className="font-bold text-gray-900 text-sm">{t('dashboard.exclusivePosts')}</h4>
                   <p className="text-xs text-gray-500 leading-relaxed">{t('dashboard.exclusivePostsDesc')}</p>
                 </div>
-                <button className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100">
+                <button
+                  onClick={() => navigate('/posts')}
+                  className="mt-6 w-full flex items-center justify-between text-xs font-semibold text-gray-700 bg-gray-50 group-hover:bg-gray-100 transition-colors py-2 px-4 rounded-full border border-gray-100"
+                >
                   <span>{t('dashboard.writeAPost')}</span>
                   <ChevronRight size={14} className="text-gray-400" />
                 </button>

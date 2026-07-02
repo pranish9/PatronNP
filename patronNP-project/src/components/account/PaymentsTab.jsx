@@ -6,10 +6,13 @@ import toast from "react-hot-toast";
 import purchaseService from "../../services/purchaseService";
 import { openProductContent } from "../../services/productService";
 
+const PAGE_SIZE = 5;
+
 const PaymentsTab = () => {
   const navigate = useNavigate();
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     purchaseService
@@ -45,7 +48,7 @@ const PaymentsTab = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {purchases.map((purchase, i) => (
+          {purchases.slice(0, visibleCount).map((purchase, i) => (
             <div
               key={`${purchase.productId}-${purchase.createdAt}-${i}`}
               className="flex items-center gap-4 border border-patron-gray-200 rounded-xl p-3"
@@ -94,6 +97,18 @@ const PaymentsTab = () => {
               </div>
             </div>
           ))}
+
+          {visibleCount < purchases.length && (
+            <div className="text-center pt-1">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                className="px-4 py-2 text-sm font-medium text-patron-green-700 border border-patron-green-200 rounded-xl hover:bg-patron-green-50"
+              >
+                Load more
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

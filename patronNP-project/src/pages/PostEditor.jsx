@@ -1,0 +1,554 @@
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Bold,
+  Italic,
+  Underline,
+  Link as LinkIcon,
+  Type,
+  List,
+  Quote,
+  Image as ImageIcon,
+  Video,
+  Code,
+  X,
+  Plus,
+  Music,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import toast from "react-hot-toast";
+
+import postService from "../services/postService";
+import PostSidebar from "../components/posts/PostSidebar";
+import FileDropzone from "../components/posts/FileDropzone";
+import PromptModal from "../components/posts/PromptModal";
+import PostLiveModal from "../components/posts/PostLiveModal";
+import { uploadImageToCloudinary } from "../services/cloudinaryService";
+
+const getYouTubeEmbedUrl = (url) => {
+  const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+};
+
+const PostEditor = () => {
+  const navigate = useNavigate();
+  const { type: typeParam, id } = useParams();
+  const username = localStorage.getItem("username") || "";
+  const [existing, setExisting] = useState(null);
+  const type = existing?.postType?.toLowerCase() || typeParam || "post";
+
+  const [title, setTitle] = useState("");
+  const [caption, setCaption] = useState("");
+  const [images, setImages] = useState([]);
+  const [audioFile, setAudioFile] = useState(null);
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [visibility, setVisibility] = useState("PUBLIC");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  const editorRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const savedRangeRef = useRef(null);
+  const selectedImageRef = useRef(null);
+  const toolbarRef = useRef(null);
+  const [imageSelection, setImageSelection] = useState(null);
+  const [liveModalOpen, setLiveModalOpen] = useState(false);
+  const [livePost, setLivePost] = useState(null);
+
+  useEffect(() => {
+    if (!id) return;
+    postService
+      .getPost(id)
+      .then(({ data }) => {
+        setExisting(data);
+        setTitle(data.title || "");
+        setCaption(data.caption || "");
+        setImages((data.images || []).map((url) => ({ url })));
+        setAudioFile(data.audioUrl ? { url: data.audioUrl, name: data.audioName } : null);
+        setPollOptions(data.pollOptions?.length ? data.pollOptions : ["", ""]);
+        setVisibility(data.visibility || "PUBLIC");
+        setSelectedCategories(data.categories || []);
+        if (editorRef.current && data.content) {
+          editorRef.current.innerHTML = data.content;
+        }
+      })
+      .catch(() => toast.error("Failed to load post"));
+  }, [id]);
+
+  const toggleCategory = (cat) =>
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+
+  const saveSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current?.contains(sel.anchorNode)) {
+      savedRangeRef.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    editorRef.current?.focus();
+    const range = savedRangeRef.current;
+    if (!range) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  const exec = (command, value) => {
+    editorRef.current?.focus();
+    document.execCommand(command, false, value);
+  };
+
+  const clearImageSelection = () => {
+    if (selectedImageRef.current) {
+      selectedImageRef.current.style.outline = "";
+      selectedImageRef.current.style.outlineOffset = "";
+    }
+    selectedImageRef.current = null;
+    setImageSelection(null);
+  };
+
+  const selectImageNode = (img) => {
+    if (selectedImageRef.current && selectedImageRef.current !== img) clearImageSelection();
+    img.style.outline = "2px solid #16a34a";
+    img.style.outlineOffset = "2px";
+    selectedImageRef.current = img;
+    setImageSelection({});
+  };
+
+  // Clicking the image selects it (shows the remove/resize toolbar); clicking anything
+  // else — including elsewhere in the text — deselects it. Clicks on the toolbar itself
+  // are excluded so pressing its buttons doesn't immediately clear the selection first.
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target.tagName === "IMG" && editorRef.current?.contains(e.target)) {
+        selectImageNode(e.target);
+      } else if (toolbarRef.current?.contains(e.target)) {
+        return;
+      } else {
+        clearImageSelection();
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const resizeSelectedImage = (width) => {
+    const img = selectedImageRef.current;
+    if (!img) return;
+    img.style.width = width === "full" ? "100%" : `${width}px`;
+    img.style.height = "auto";
+    setImageSelection({});
+  };
+
+  const removeSelectedImage = () => {
+    if (!selectedImageRef.current) return;
+    selectedImageRef.current.remove();
+    clearImageSelection();
+  };
+
+  const openLinkModal = () => {
+    saveSelection();
+    setLinkModalOpen(true);
+  };
+
+  const handleInsertLink = (url) => {
+    restoreSelection();
+    document.execCommand("createLink", false, url);
+    setLinkModalOpen(false);
+  };
+
+  const openVideoModal = () => {
+    saveSelection();
+    setVideoModalOpen(true);
+  };
+
+  const handleInsertVideo = (url) => {
+    const embedUrl = getYouTubeEmbedUrl(url);
+    if (!embedUrl) {
+      toast.error("Enter a valid YouTube link");
+      return;
+    }
+    restoreSelection();
+    document.execCommand(
+      "insertHTML",
+      false,
+      `<iframe src="${embedUrl}" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9"></iframe><br/>`
+    );
+    setVideoModalOpen(false);
+  };
+
+  const openImagePicker = () => {
+    saveSelection();
+    imageInputRef.current?.click();
+  };
+
+  const handleImageFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingImage(true);
+    try {
+      const url = await uploadImageToCloudinary(file);
+      restoreSelection();
+      // insertImage (vs. insertHTML) leaves the image as the last node with nowhere for the
+      // caret to go, which is why typing after it — and selecting it to delete — didn't work.
+      // A trailing <br> gives the cursor a line to land on, same as the video embed below.
+      document.execCommand("insertHTML", false, `<img src="${url}" alt="" draggable="false" /><br/>`);
+    } catch (err) {
+      toast.error(err.message || "Image upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const insertCode = () => {
+    const selection = window.getSelection()?.toString() || "code";
+    editorRef.current?.focus();
+    document.execCommand("insertHTML", false, `<code>${selection}</code>`);
+  };
+
+  const handleImageFiles = (files) => {
+    const next = files.map((file) => ({ file, url: URL.createObjectURL(file) }));
+    setImages((prev) => [...prev, ...next]);
+  };
+
+  const removeImage = (index) => setImages((prev) => prev.filter((_, i) => i !== index));
+
+  const handleAudioFiles = (files) => {
+    const file = files[0];
+    if (!file) return;
+    setAudioFile({ file, url: URL.createObjectURL(file), name: file.name });
+  };
+
+  const updatePollOption = (index, value) =>
+    setPollOptions((prev) => prev.map((o, i) => (i === index ? value : o)));
+
+  const addPollOption = () => setPollOptions((prev) => [...prev, ""]);
+
+  const removePollOption = (index) =>
+    setPollOptions((prev) => prev.filter((_, i) => i !== index));
+
+  const buildPayload = () => {
+    const base = {
+      postType: type.toUpperCase(),
+      title: title.trim(),
+      visibility,
+      categories: selectedCategories,
+      caption,
+    };
+    if (type === "post") return { ...base, content: editorRef.current?.innerHTML || "" };
+    if (type === "album") return { ...base, images: images.map((i) => i.url) };
+    if (type === "audio") return { ...base, audioUrl: audioFile?.url || null, audioName: audioFile?.name || null };
+    if (type === "poll") return { ...base, pollOptions: pollOptions.filter((o) => o.trim()) };
+    return base;
+  };
+
+  const validate = (publishing) => {
+    if (!title.trim()) {
+      toast.error("Add a title first");
+      return false;
+    }
+    if (!publishing) return true;
+    if (type === "album" && images.length === 0) {
+      toast.error("Add at least one image");
+      return false;
+    }
+    if (type === "audio" && !audioFile) {
+      toast.error("Upload an audio file");
+      return false;
+    }
+    if (type === "poll" && pollOptions.filter((o) => o.trim()).length < 2) {
+      toast.error("Add at least two poll options");
+      return false;
+    }
+    return true;
+  };
+
+  const save = async (status, publishAt = null) => {
+    if (!validate(status === "PUBLISHED" || status === "SCHEDULED")) return;
+    const payload = { ...buildPayload(), status, publishAt };
+    try {
+      const { data } = existing
+        ? await postService.updatePost(existing.id, payload)
+        : await postService.createPost(payload);
+
+      if (status === "PUBLISHED") {
+        setLivePost(data);
+        setLiveModalOpen(true);
+      } else {
+        toast.success(status === "SCHEDULED" ? "Post scheduled" : "Saved as draft");
+        navigate("/posts");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to save post");
+    }
+  };
+
+  const closeLiveModalAndRedirect = () => {
+    setLiveModalOpen(false);
+    navigate(`/${username}/posts/${livePost.id}`);
+  };
+
+  const canPublish = title.trim().length > 0;
+
+  return (
+    <div className="min-h-screen bg-patron-white">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+        <button
+          onClick={() => navigate("/posts")}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-patron-gray-300 text-sm font-semibold text-patron-black hover:bg-patron-gray-50 mb-6"
+        >
+          <ArrowLeft size={16} />
+          Dashboard
+        </button>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1 min-w-0">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={type === "post" ? "Title" : "Add title"}
+              className="w-full text-3xl font-bold text-patron-black placeholder-patron-gray-300 outline-none mb-4"
+            />
+
+            {type === "post" && (
+              <>
+                <div className="flex flex-wrap items-center gap-1 border-y border-patron-gray-200 py-2 mb-4 text-patron-gray-600">
+                  <ToolbarButton icon={Bold} onClick={() => exec("bold")} />
+                  <ToolbarButton icon={Italic} onClick={() => exec("italic")} />
+                  <ToolbarButton icon={Underline} onClick={() => exec("underline")} />
+                  <ToolbarButton icon={LinkIcon} onClick={openLinkModal} />
+                  <ToolbarButton
+                    icon={Type}
+                    onClick={() => exec("formatBlock", editorRef.current?.querySelector("h2") ? "P" : "H2")}
+                  />
+                  <ToolbarButton icon={List} onClick={() => exec("insertUnorderedList")} />
+                  <ToolbarButton icon={Quote} onClick={() => exec("formatBlock", "BLOCKQUOTE")} />
+                  <ToolbarButton
+                    icon={uploadingImage ? Loader2 : ImageIcon}
+                    spin={uploadingImage}
+                    onClick={openImagePicker}
+                  />
+                  <ToolbarButton icon={Video} onClick={openVideoModal} />
+                  <ToolbarButton icon={Code} onClick={insertCode} />
+                </div>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageFileSelected}
+                />
+                <div className="relative">
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="min-h-[300px] text-patron-black outline-none max-w-none empty:before:content-['Write_something...'] empty:before:text-patron-gray-400 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_blockquote]:border-l-4 [&_blockquote]:border-patron-gray-300 [&_blockquote]:pl-3 [&_blockquote]:text-patron-gray-600 [&_blockquote]:italic [&_code]:bg-patron-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_a]:text-patron-green-700 [&_a]:underline [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2 [&_img]:block [&_img]:cursor-pointer [&_iframe]:rounded-lg [&_iframe]:my-2"
+                  />
+                  {imageSelection && selectedImageRef.current && (
+                    <div
+                      ref={toolbarRef}
+                      style={{
+                        top: Math.max(selectedImageRef.current.offsetTop - 42, 0),
+                        left: selectedImageRef.current.offsetLeft,
+                      }}
+                      className="absolute z-20 flex items-center gap-0.5 bg-patron-black text-white rounded-lg px-1 py-1 shadow-lg text-xs"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => resizeSelectedImage(160)}
+                        className="px-2 py-1 rounded hover:bg-white/20 font-medium"
+                      >
+                        S
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => resizeSelectedImage(320)}
+                        className="px-2 py-1 rounded hover:bg-white/20 font-medium"
+                      >
+                        M
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => resizeSelectedImage(480)}
+                        className="px-2 py-1 rounded hover:bg-white/20 font-medium"
+                      >
+                        L
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => resizeSelectedImage("full")}
+                        className="px-2 py-1 rounded hover:bg-white/20 font-medium"
+                      >
+                        Full
+                      </button>
+                      <span className="w-px h-4 bg-white/30 mx-0.5" />
+                      <button
+                        type="button"
+                        onClick={removeSelectedImage}
+                        className="p-1.5 rounded hover:bg-white/20"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {type === "album" && (
+              <div className="space-y-4">
+                <FileDropzone accept="image/*" multiple onFiles={handleImageFiles} icon={ImageIcon} />
+                {images.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {images.map((img, i) => (
+                      <div key={img.url} className="relative aspect-square rounded-xl overflow-hidden group">
+                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => removeImage(i)}
+                          className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <input
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Type something here (optional)"
+                  className="w-full text-sm text-patron-gray-700 placeholder-patron-gray-400 outline-none border-b border-patron-gray-100 py-2"
+                />
+              </div>
+            )}
+
+            {type === "audio" && (
+              <div className="space-y-4">
+                {audioFile ? (
+                  <div className="flex items-center gap-3 bg-patron-gray-50 border border-patron-gray-200 rounded-2xl p-4">
+                    <div className="w-12 h-12 rounded-xl bg-patron-green-100 flex items-center justify-center text-patron-green-600 shrink-0">
+                      <Music size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-patron-black truncate">{audioFile.name}</p>
+                      <audio src={audioFile.url} controls className="w-full mt-1 h-8" />
+                    </div>
+                    <button onClick={() => setAudioFile(null)} className="text-patron-gray-400 hover:text-red-600 shrink-0">
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <FileDropzone
+                    accept="audio/*"
+                    onFiles={handleAudioFiles}
+                    icon={Music}
+                    hint="Upload audio or drag and drop."
+                  />
+                )}
+                <input
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  placeholder="Type something here (optional)"
+                  className="w-full text-sm text-patron-gray-700 placeholder-patron-gray-400 outline-none border-b border-patron-gray-100 py-2"
+                />
+              </div>
+            )}
+
+            {type === "poll" && (
+              <div className="space-y-3">
+                {pollOptions.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      value={opt}
+                      onChange={(e) => updatePollOption(i, e.target.value)}
+                      placeholder={`Option ${i + 1}`}
+                      className="flex-1 px-4 py-2.5 text-sm bg-patron-gray-100 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+                    />
+                    {pollOptions.length > 2 && (
+                      <button
+                        onClick={() => removePollOption(i)}
+                        className="text-patron-gray-400 hover:text-red-600 shrink-0"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={addPollOption}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-patron-green-700 hover:text-patron-green-800"
+                >
+                  <Plus size={15} />
+                  Add option
+                </button>
+              </div>
+            )}
+          </div>
+
+          <PostSidebar
+            canPublish={canPublish}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+            selectedCategories={selectedCategories}
+            onToggleCategory={toggleCategory}
+            onPublishNow={() => save("PUBLISHED", new Date().toISOString())}
+            onSaveDraft={() => save("DRAFT")}
+            onSchedule={(datetime) => save("SCHEDULED", new Date(datetime).toISOString())}
+          />
+        </div>
+      </div>
+
+      <PromptModal
+        isOpen={linkModalOpen}
+        title="Insert link"
+        label="URL"
+        placeholder="https://example.com"
+        confirmLabel="Insert"
+        onConfirm={handleInsertLink}
+        onClose={() => setLinkModalOpen(false)}
+      />
+
+      <PromptModal
+        isOpen={videoModalOpen}
+        title="Insert YouTube video"
+        label="YouTube link"
+        placeholder="https://www.youtube.com/watch?v=..."
+        confirmLabel="Insert"
+        onConfirm={handleInsertVideo}
+        onClose={() => setVideoModalOpen(false)}
+      />
+
+      {livePost && (
+        <PostLiveModal
+          isOpen={liveModalOpen}
+          onClose={closeLiveModalAndRedirect}
+          url={`${window.location.origin}/${username}/posts/${livePost.id}`}
+          title={livePost.title}
+        />
+      )}
+    </div>
+  );
+};
+
+const ToolbarButton = ({ icon: Icon, onClick, spin }) => (
+  <button
+    type="button"
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={onClick}
+    disabled={spin}
+    className="p-2 rounded-lg hover:bg-patron-gray-100 disabled:opacity-60"
+  >
+    <Icon size={16} className={spin ? "animate-spin" : ""} />
+  </button>
+);
+
+export default PostEditor;

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import useThemeStore from "./stores/themeStore";
@@ -14,9 +14,6 @@ import Layout from "./components/creatorLayout/Layout";
 // Protected Pages
 import Dashboard from "./pages/Dashboard";
 import Supporters from "./pages/Supporters";
-import Shop from "./pages/Shop";
-import ShopProductForm from "./pages/ShopProductForm";
-import ShopDiscountForm from "./pages/ShopDiscountForm";
 import AccountPage from "./pages/AccountPage";
 import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
 import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
@@ -26,11 +23,6 @@ import CreatorProfile from "./pages/OnboardingSteps/CreatorProfile";
 import CreatorPosts from "./pages/CreatorPage/CreatorPosts";
 import CreatorPostDetail from "./pages/CreatorPage/CreatorPostDetail";
 import CreatorMembership from "./pages/CreatorPage/CreatorMembership";
-import CreatorShop from "./pages/CreatorPage/CreatorShop";
-import CreatorShopItem from "./pages/CreatorPage/CreatorShopItem";
-import CreatorCheckout from "./pages/CreatorPage/CreatorCheckout";
-import PaymentSuccess from "./pages/CreatorPage/PaymentSuccess";
-import PaymentFailure from "./pages/CreatorPage/PaymentFailure";
 import TipPaymentSuccess from "./pages/CreatorPage/TipPaymentSuccess";
 import TipPaymentFailure from "./pages/CreatorPage/TipPaymentFailure";
 import Integrations from "./pages/Integrations";
@@ -38,6 +30,26 @@ import StreamAlertOverlay from "./pages/StreamAlertOverlay";
 
 // Layouts
 import PublicCreatorLayout from "./components/PublicCreatorLayout/PublicCreatorLayout";
+
+// Shop + shop-checkout pages are lazy-loaded: their charting/payment-gateway
+// dependencies are heavy and most visitors never touch the shop at all, so
+// there's no reason to ship that code in the initial bundle everyone downloads.
+const Posts = lazy(() => import("./pages/Posts"));
+const PostEditor = lazy(() => import("./pages/PostEditor"));
+const Shop = lazy(() => import("./pages/Shop"));
+const ShopProductForm = lazy(() => import("./pages/ShopProductForm"));
+const ShopDiscountForm = lazy(() => import("./pages/ShopDiscountForm"));
+const CreatorShop = lazy(() => import("./pages/CreatorPage/CreatorShop"));
+const CreatorShopItem = lazy(() => import("./pages/CreatorPage/CreatorShopItem"));
+const CreatorCheckout = lazy(() => import("./pages/CreatorPage/CreatorCheckout"));
+const PaymentSuccess = lazy(() => import("./pages/CreatorPage/PaymentSuccess"));
+const PaymentFailure = lazy(() => import("./pages/CreatorPage/PaymentFailure"));
+
+const RouteFallback = () => (
+  <div className="min-h-[50vh] flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-patron-green-600 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("accessToken");
@@ -94,6 +106,7 @@ const App = () => {
   }, []);
 
   return (
+    <Suspense fallback={<RouteFallback />}>
     <Routes>
       {/* PUBLIC ROUTES — must come before /:username */}
       <Route path="/" element={<Home />} />
@@ -142,6 +155,31 @@ const App = () => {
         element={
           <ProtectedRoute>
             <Supporters />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/posts"
+        element={
+          <ProtectedRoute>
+            <Posts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/posts/new/:type"
+        element={
+          <ProtectedRoute>
+            <PostEditor />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/posts/edit/:id"
+        element={
+          <ProtectedRoute>
+            <PostEditor />
           </ProtectedRoute>
         }
       />
@@ -199,6 +237,7 @@ const App = () => {
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   );
 };
 

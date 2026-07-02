@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ChevronLeft, Upload, X } from "lucide-react";
+import { ChevronLeft, Upload, X, Lightbulb } from "lucide-react";
 import toast from "react-hot-toast";
 
 import productService from "../services/productService";
@@ -13,6 +13,7 @@ const EMPTY_FORM = {
   successPageType: "CONFIRMATION_MESSAGE",
   confirmationMessage: "",
   redirectUrl: "",
+  contentLink: "",
   categories: [],
   askQuestion: false,
   questionText: "",
@@ -23,16 +24,74 @@ const EMPTY_FORM = {
   allowBuyerChooseQuantity: false,
 };
 
+// Per-type guidance shown on the create form, plus sensible starting defaults
+// (question to ask, placeholders) so a creator picking a template isn't staring
+// at the same blank generic form as "Start from scratch".
+const PRODUCT_TYPE_GUIDES = {
+  DIGITAL_PRODUCT: {
+    title: "Digital product",
+    tips: [
+      "Upload the file below (PDF, ZIP, etc.), or paste a link in \"Content link\" — buyers get it instantly after payment.",
+      "Mention the format and what's included in the description (e.g. \"12-page PDF + editable template\").",
+    ],
+    namePlaceholder: "e.g. Ultimate Budget Planner Template",
+    descriptionPlaceholder: "What's inside? List the format, page count, or what makes it valuable.",
+  },
+  INSTAGRAM_CLOSE_FRIENDS: {
+    title: "Instagram close friends access",
+    tips: [
+      "Turn on \"Ask a question\" to collect the buyer's Instagram username — you'll need it to add them.",
+      "Use the confirmation message to set expectations, e.g. \"You'll be added within 24 hours.\"",
+    ],
+    namePlaceholder: "e.g. Close Friends Access — 1 Month",
+    descriptionPlaceholder: "What do subscribers get access to, and for how long?",
+    defaultQuestion: "What's your Instagram username?",
+    autoAskQuestion: true,
+  },
+  ZOOM_CALL: {
+    title: "1-on-1 Zoom call",
+    tips: [
+      "Add your scheduling link (Calendly, etc.) as the \"Content link\" so buyers can book a slot themselves.",
+      "Turn on \"Ask a question\" to collect their preferred time and timezone, and consider limiting slots to match your availability.",
+    ],
+    namePlaceholder: "e.g. 30-min 1-on-1 Zoom Call",
+    descriptionPlaceholder: "What will you cover? How long is the call?",
+    defaultQuestion: "What date/time works for you? (please include your timezone)",
+    autoAskQuestion: true,
+  },
+  EVENT_TICKET: {
+    title: "Ticket for an event",
+    tips: [
+      "Include the event date, time, and location (or the link, if it's online) in the description.",
+      "Turn on \"Limit slots\" to cap how many tickets are sold, and \"Ask a question\" to collect attendee names.",
+    ],
+    namePlaceholder: "e.g. VIP Ticket — Live Show, Nov 20",
+    descriptionPlaceholder: "Event date, time, venue or link, and what's included with the ticket.",
+    defaultQuestion: "Full name for the guest list?",
+    autoAskQuestion: true,
+    autoLimitSlots: true,
+  },
+};
+
+const buildInitialForm = (productType) => {
+  const guide = PRODUCT_TYPE_GUIDES[productType];
+  return {
+    ...EMPTY_FORM,
+    productType,
+    askQuestion: guide?.autoAskQuestion || false,
+    questionText: guide?.autoAskQuestion ? guide.defaultQuestion : "",
+    limitSlots: guide?.autoLimitSlots || false,
+  };
+};
+
 const ShopProductForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isEdit = Boolean(id);
 
-  const [form, setForm] = useState({
-    ...EMPTY_FORM,
-    productType: searchParams.get("type") || "CUSTOM",
-  });
+  const [form, setForm] = useState(buildInitialForm(searchParams.get("type") || "CUSTOM"));
+  const guide = PRODUCT_TYPE_GUIDES[form.productType];
   const [featuredImageUrl, setFeaturedImageUrl] = useState(null);
   const [featuredImageFile, setFeaturedImageFile] = useState(null);
   const [digitalFile, setDigitalFile] = useState(null);
@@ -56,6 +115,7 @@ const ShopProductForm = () => {
           successPageType: p.successPageType || "CONFIRMATION_MESSAGE",
           confirmationMessage: p.confirmationMessage || "",
           redirectUrl: p.redirectUrl || "",
+          contentLink: p.contentLink || "",
           categories: p.categories || [],
           askQuestion: p.askQuestion || false,
           questionText: p.questionText || "",
@@ -162,13 +222,27 @@ const ShopProductForm = () => {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+        {guide && (
+          <div className="bg-patron-green-50 border border-patron-green-100 rounded-2xl p-4 sm:p-5">
+            <div className="flex items-center gap-2">
+              <Lightbulb size={16} className="text-patron-green-700 shrink-0" />
+              <h2 className="text-sm font-bold text-patron-black">{guide.title} — quick guide</h2>
+            </div>
+            <ul className="mt-2 space-y-1.5 text-xs text-patron-gray-600 list-disc list-inside">
+              {guide.tips.map((tip) => (
+                <li key={tip}>{tip}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="bg-patron-white rounded-2xl shadow-sm p-5 sm:p-6 space-y-5">
           <div>
             <label className="text-sm font-bold text-patron-black">Name</label>
             <input
               value={form.name}
               onChange={(e) => set({ name: e.target.value })}
-              placeholder="What are you offering?"
+              placeholder={guide?.namePlaceholder || "What are you offering?"}
               className="mt-1.5 w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
             />
           </div>
@@ -179,7 +253,7 @@ const ShopProductForm = () => {
               rows={4}
               value={form.description}
               onChange={(e) => set({ description: e.target.value })}
-              placeholder="Describe what you're selling in a few sentences"
+              placeholder={guide?.descriptionPlaceholder || "Describe what you're selling in a few sentences"}
               className="mt-1.5 w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
             />
           </div>
@@ -290,6 +364,19 @@ const ShopProductForm = () => {
                 }}
               />
             </label>
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-patron-black">Content link (optional)</label>
+            <input
+              value={form.contentLink}
+              onChange={(e) => set({ contentLink: e.target.value })}
+              placeholder="https://drive.google.com/..."
+              className="mt-1.5 w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+            />
+            <p className="mt-2 text-xs text-patron-gray-400">
+              Shown as "View content" to buyers after purchase, and included in their order email.
+            </p>
           </div>
 
           <div>

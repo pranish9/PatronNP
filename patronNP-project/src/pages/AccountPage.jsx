@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, Suspense, lazy } from "react";
 
 import Layout from "../components/creatorLayout/Layout";
 import EditProfileTab from "../components/account/EditProfileTab";
-import PaymentsTab from "../components/account/PaymentsTab";
 import FollowersTab from "../components/account/FollowersTab";
+
+// Payment/purchase history is only needed once someone actually clicks the
+// "Payments" tab, so it's split into its own chunk instead of loading on
+// every "My account" visit.
+const PaymentsTab = lazy(() => import("../components/account/PaymentsTab"));
 
 const TABS = ["Edit profile", "Payments", "Followers"];
 
@@ -33,7 +37,17 @@ const AccountPage = () => {
           </div>
 
           {activeTab === "Edit profile" && <EditProfileTab />}
-          {activeTab === "Payments" && <PaymentsTab />}
+          {activeTab === "Payments" && (
+            <Suspense
+              fallback={
+                <div className="bg-patron-white rounded-2xl shadow-sm p-5 sm:p-6 py-12 flex justify-center">
+                  <div className="w-6 h-6 border-2 border-patron-green-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              }
+            >
+              <PaymentsTab />
+            </Suspense>
+          )}
           {activeTab === "Followers" && <FollowersTab />}
         </div>
       </div>

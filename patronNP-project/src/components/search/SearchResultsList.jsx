@@ -1,6 +1,6 @@
 import { Loader } from 'lucide-react';
 
-const SearchResultsList = ({ results, isLoading, onResultClick }) => {
+const SearchResultsList = ({ results, isLoading, onResultClick, emptyMessage = 'No creators found. Try a different search term.' }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -12,7 +12,7 @@ const SearchResultsList = ({ results, isLoading, onResultClick }) => {
   if (results.length === 0) {
     return (
       <div className="p-6 text-center text-gray-500">
-        <p>No creators found. Try a different search term.</p>
+        <p>{emptyMessage}</p>
       </div>
     );
   }

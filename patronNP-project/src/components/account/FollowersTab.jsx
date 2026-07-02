@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -32,7 +33,11 @@ const FollowersTab = () => {
       ) : (
         <div className="divide-y divide-patron-gray-100">
           {followers.map((follower) => (
-            <div key={follower.username} className="flex items-center gap-3 py-3">
+            <Link
+              key={follower.username}
+              to={`/${follower.username}`}
+              className="flex items-center gap-3 py-3 -mx-2 px-2 rounded-xl hover:bg-patron-gray-50 transition-colors"
+            >
               <img
                 src={
                   follower.profilePictureUrl ||
@@ -49,7 +54,7 @@ const FollowersTab = () => {
                 </p>
                 <p className="text-xs text-patron-gray-500 truncate">@{follower.username}</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

@@ -108,6 +108,20 @@ const PaymentSuccess = () => {
                     <p className="font-bold text-patron-black text-sm leading-snug">{item.productName}</p>
                   </div>
 
+                  {item.digitalFileUrl && item.digitalFileUrl.startsWith("http") && (
+                    <div className="mt-3 border border-patron-gray-200 rounded-xl px-3 py-2.5 bg-patron-gray-50">
+                      <p className="text-xs font-semibold text-patron-gray-500 mb-1">Your content link</p>
+                      <a
+                        href={item.digitalFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-patron-green-700 hover:underline break-all"
+                      >
+                        {item.digitalFileUrl}
+                      </a>
+                    </div>
+                  )}
+
                   <button
                     onClick={() => handleViewContent(item)}
                     className="w-full mt-3 py-2.5 bg-patron-orange-500 hover:bg-patron-orange-600 text-white text-sm font-bold rounded-full"

@@ -36,7 +36,9 @@ const Supporters = () => {
       username ? getRecentSupporters(username, 0, 10).catch(() => ({ content: [] })) : Promise.resolve({ content: [] }),
     ]).then(([statsRes, supportersRes]) => {
       if (statsRes.data) setStats(statsRes.data);
-      setSupporters(supportersRes.content || []);
+      // getRecentSupporters is shared with the public creator page (which intentionally
+      // shows shop/membership activity too) — this tab is one-time tips only, so filter here.
+      setSupporters((supportersRes.content || []).filter((s) => s.category === "TIP"));
       setLoadingOneTime(false);
       setOneTimeLoaded(true);
     });

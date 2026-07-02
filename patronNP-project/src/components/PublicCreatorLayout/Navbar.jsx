@@ -19,11 +19,13 @@ import SupportButton from "../creatorLayout/RightSidebar";
 import CreateMenu from "./CreateMenu";
 import FollowButton from "./FollowButton";
 import LanguageSwitcher from "../LanguageSwitcher";
+import ShareModal from "./ShareModal";
 
 const Navbar = ({ username, onLogout }) => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const dropdownRef = useRef(null);
   const authUser = getAuthUser();
   const token = localStorage.getItem("accessToken");
@@ -54,15 +56,9 @@ const Navbar = ({ username, onLogout }) => {
     setMobileNavOpen(false);
   }, [username, location.pathname]);
 
-  const handleShare = async () => {
-    const url = `${window.location.origin}/${username}`;
-    if (navigator.share) {
-      await navigator.share({ title: displayCreator?.displayName || username, url });
-    } else {
-      await navigator.clipboard.writeText(url);
-      alert("Link copied!");
-    }
-  };
+  const shareUrl = `${window.location.origin}/${username}`;
+
+  const handleShare = () => setShareModalOpen(true);
 
   const base = `/${username}`;
   const avatarUrl =
@@ -85,6 +81,7 @@ const Navbar = ({ username, onLogout }) => {
   };
 
   return (
+    <>
     <nav className="sticky top-0 z-50 w-full bg-patron-white/95 backdrop-blur-md border-b border-patron-gray-200">
       <div className="max-w-6xl mx-auto min-h-14 sm:min-h-16 flex flex-wrap sm:flex-nowrap items-center justify-between px-3 sm:px-6 gap-2 py-2 sm:py-0">
         {/* Left — creator identity from backend */}
@@ -158,6 +155,16 @@ const Navbar = ({ username, onLogout }) => {
                 Dashboard
               </Link>
             </>
+          )}
+
+          {userState === "logged-in" && (
+            <Link
+              to="/dashboard"
+              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 bg-patron-green-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-patron-green-700"
+            >
+              <LayoutDashboard size={14} />
+              Dashboard
+            </Link>
           )}
 
           {(userState === "logged-in" || userState === "visitor") && (
@@ -257,7 +264,7 @@ const Navbar = ({ username, onLogout }) => {
               </Link>
             ))}
 
-          {userState === "creator" && (
+          {(userState === "creator" || userState === "logged-in") && (
             <Link
               to="/dashboard"
               onClick={() => setMobileNavOpen(false)}
@@ -280,6 +287,17 @@ const Navbar = ({ username, onLogout }) => {
               Edit page
             </button>
           )}
+
+          <button
+            onClick={() => {
+              setMobileNavOpen(false);
+              setShareModalOpen(true);
+            }}
+            className="flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium text-patron-gray-600"
+          >
+            <Share2 size={18} />
+            Share
+          </button>
 
           <div className="col-span-2 sm:col-span-4 flex justify-center py-1">
             <LanguageSwitcher />
@@ -310,6 +328,14 @@ const Navbar = ({ username, onLogout }) => {
         </div>
       )}
     </nav>
+
+    <ShareModal
+      isOpen={shareModalOpen}
+      onClose={() => setShareModalOpen(false)}
+      url={shareUrl}
+      title={displayCreator?.displayName || username}
+    />
+    </>
   );
 };
 

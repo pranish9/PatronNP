@@ -10,6 +10,7 @@ const toFormData = (product = {}, { featuredImage, digitalFile, publish } = {}) 
   if (product.successPageType) formData.append('successPageType', product.successPageType);
   if (product.confirmationMessage != null) formData.append('confirmationMessage', product.confirmationMessage);
   if (product.redirectUrl != null) formData.append('redirectUrl', product.redirectUrl);
+  if (product.contentLink != null) formData.append('contentLink', product.contentLink);
 
   (product.categories || []).forEach((c) => formData.append('categories', c));
 
@@ -60,6 +61,18 @@ export const productService = {
   getPublicProduct: (username, id) => apiClient.get(`/creators/${username}/products/${id}`),
 };
 
+// Word/Excel/PowerPoint files have no native in-browser viewer on desktop or mobile —
+// opening the raw file just triggers a silent download (or nothing) instead of a preview.
+// Routing them through Google's viewer renders them inline everywhere, same as browsers
+// already do natively for PDFs.
+const OFFICE_EXTENSIONS = new Set(['doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx']);
+
+const getExtension = (url) => {
+  const clean = url.split('?')[0].split('#')[0];
+  const last = clean.split('.').pop();
+  return last ? last.toLowerCase() : '';
+};
+
 // A DB-backed download URL (from resolveContentUrl on the backend) is a relative path
 // under /api and needs the same Authorization header as every other API call — a plain
 // window.open() wouldn't carry it. A legacy Cloudinary URL is already absolute/public
@@ -68,6 +81,11 @@ export const productService = {
 export const openProductContent = async (url) => {
   if (!url) return;
   if (!url.startsWith('/')) {
+    if (OFFICE_EXTENSIONS.has(getExtension(url))) {
+      const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+      window.open(viewerUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
     window.open(url, '_blank', 'noopener,noreferrer');
     return;
   }

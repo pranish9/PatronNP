@@ -83,7 +83,7 @@ const CreatorShopItem = () => {
     if (item.digitalFileUrl) {
       openProductContent(item.digitalFileUrl);
     } else {
-      toast("Check your confirmation email for access details");
+      toast("The creator hasn't added content for this item yet");
     }
   };
 
@@ -177,6 +177,20 @@ const CreatorShopItem = () => {
           )}
 
           <p className="text-patron-gray-600 leading-relaxed mt-5 flex-1">{item.description}</p>
+
+          {item.purchasedByCurrentUser && item.digitalFileUrl && item.digitalFileUrl.startsWith("http") && (
+            <div className="mt-4 border border-patron-gray-200 rounded-xl px-4 py-3 bg-patron-gray-50">
+              <p className="text-xs font-semibold text-patron-gray-500 mb-1">Your content link</p>
+              <a
+                href={item.digitalFileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-patron-green-700 hover:underline break-all"
+              >
+                {item.digitalFileUrl}
+              </a>
+            </div>
+          )}
 
           {item.purchasedByCurrentUser ? (
             <>

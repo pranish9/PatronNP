@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search as SearchIcon, X } from 'lucide-react';
-import { searchCreators, PAGE_SIZE } from '../../services/searchService';
+import { Search as SearchIcon, X, TrendingUp } from 'lucide-react';
+import { searchCreators, getTopCreators, PAGE_SIZE } from '../../services/searchService';
 import useDebounce from '../../utils/useDebounce';
 import useInfiniteScroll from '../../utils/useInfiniteScroll';
 import SearchResultsList from './SearchResultsList';
@@ -13,6 +13,8 @@ const SearchModal = ({ isOpen, onClose }) => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [trendingCreators, setTrendingCreators] = useState([]);
+  const [loadingTrending, setLoadingTrending] = useState(true);
 
   const debouncedQuery = useDebounce(searchQuery, 350);
   const inputRef = useRef(null);
@@ -21,6 +23,16 @@ const SearchModal = ({ isOpen, onClose }) => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
     }
+  }, [isOpen]);
+
+  // Show trending creators up front, before the person has typed anything to search for.
+  useEffect(() => {
+    if (!isOpen) return;
+    setLoadingTrending(true);
+    getTopCreators(0, 8)
+      .then((data) => setTrendingCreators(data.content || []))
+      .catch(() => setTrendingCreators([]))
+      .finally(() => setLoadingTrending(false));
   }, [isOpen]);
 
   const runSearch = useCallback(async (query, pageToLoad) => {
@@ -105,9 +117,18 @@ const SearchModal = ({ isOpen, onClose }) => {
               )}
             </>
           ) : (
-            <div className="p-6 text-center text-gray-400 text-sm">
-              Start typing to find a creator
-            </div>
+            <>
+              <div className="flex items-center gap-1.5 px-4 pt-4 pb-1 text-xs font-semibold text-gray-500">
+                <TrendingUp size={13} />
+                Trending creators
+              </div>
+              <SearchResultsList
+                results={trendingCreators}
+                isLoading={loadingTrending}
+                onResultClick={(creator) => goToCreator(creator.username)}
+                emptyMessage="No trending creators yet."
+              />
+            </>
           )}
         </div>
       </div>
