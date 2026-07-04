@@ -1,24 +1,181 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import {
   Search,
   X,
   Lock,
   Heart,
   MessageCircle,
-  Share2,
   TrendingUp,
   Users,
   Sparkles,
   ChevronRight,
   Loader,
+  Image,
+  Music,
+  Vote,
+  Check,
 } from "lucide-react";
 
 import Layout from "../../components/creatorLayout/Layout";
 import { searchCreators, getTopCreators, PAGE_SIZE } from "../../services/searchService";
 import { getFollowing } from "../../services/followService";
+import postService from "../../services/postService";
 import useDebounce from "../../utils/useDebounce";
 import useInfiniteScroll from "../../utils/useInfiniteScroll";
+
+const formatDate = (iso) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+
+const FEED_TYPE_TAGS = {
+  ALBUM: { label: "Album", icon: Image },
+  AUDIO: { label: "Audio", icon: Music },
+  POLL: { label: "Poll", icon: Vote },
+};
+
+const FeedPoll = ({ post }) => {
+  const [myVote, setMyVote] = useState(post.myPollVote ?? null);
+  const [counts, setCounts] = useState(post.pollVoteCounts || []);
+  const [total, setTotal] = useState(post.pollTotalVotes || 0);
+
+  const handleVote = async (optionIndex) => {
+    const prevVote = myVote;
+    const prevCounts = counts;
+    const prevTotal = total;
+
+    const nextCounts = [...counts];
+    if (prevVote !== null && prevVote !== undefined) {
+      nextCounts[prevVote] = Math.max(0, (nextCounts[prevVote] || 0) - 1);
+    }
+    nextCounts[optionIndex] = (nextCounts[optionIndex] || 0) + 1;
+    setMyVote(optionIndex);
+    setCounts(nextCounts);
+    if (prevVote === null || prevVote === undefined) setTotal(prevTotal + 1);
+
+    try {
+      const { data } = await postService.votePoll(post.id, optionIndex);
+      setMyVote(data.myPollVote ?? optionIndex);
+      setCounts(data.pollVoteCounts || nextCounts);
+      setTotal(data.pollTotalVotes ?? prevTotal);
+    } catch {
+      setMyVote(prevVote);
+      setCounts(prevCounts);
+      setTotal(prevTotal);
+      toast.error("Failed to vote");
+    }
+  };
+
+  return (
+    <div className="mt-3 space-y-2">
+      {(post.pollOptions || []).map((opt, i) => {
+        const count = counts[i] || 0;
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+        const selected = myVote === i;
+        return (
+          <button
+            key={i}
+            onClick={() => handleVote(i)}
+            className={`relative w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border overflow-hidden text-left transition-colors ${
+              selected ? "border-patron-green-600" : "border-patron-gray-200 hover:border-patron-gray-300"
+            }`}
+          >
+            <div
+              className="absolute inset-y-0 left-0 bg-patron-green-100 transition-all"
+              style={{ width: `${pct}%` }}
+            />
+            <span className="relative flex items-center gap-2 font-medium text-patron-black text-sm">
+              <span
+                className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                  selected ? "bg-patron-green-600 border-patron-green-600" : "border-patron-gray-300"
+                }`}
+              >
+                {selected && <Check size={10} className="text-white" />}
+              </span>
+              {opt}
+            </span>
+            <span className="relative text-sm font-semibold text-patron-gray-600 shrink-0">{pct}%</span>
+          </button>
+        );
+      })}
+      <p className="text-xs text-patron-gray-500">
+        {total} vote{total === 1 ? "" : "s"}
+      </p>
+    </div>
+  );
+};
+
+const FeedPostCard = ({ post }) => {
+  const typeTag = FEED_TYPE_TAGS[post.postType];
+  const thumbnail = post.images?.[0] || post.content?.match(/<img[^>]+src="([^"]+)"/)?.[1] || null;
+  const postUrl = `/${post.creatorUsername}/posts/${post.id}`;
+  const avatarUrl =
+    post.creatorProfilePictureUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(post.creatorUsername)}&background=16a34a&color=fff&size=64`;
+
+  return (
+    <div className="bg-patron-white rounded-2xl sm:rounded-3xl border border-patron-gray-200 shadow-sm overflow-hidden">
+      <div className="p-4 flex items-center gap-3">
+        <img src={avatarUrl} className="w-10 h-10 rounded-full object-cover shrink-0" alt={post.creatorUsername} />
+        <div className="min-w-0 flex-1">
+          <Link
+            to={`/${post.creatorUsername}`}
+            className="font-semibold text-sm sm:text-base hover:text-patron-green-700 block truncate"
+          >
+            @{post.creatorUsername}
+          </Link>
+          <p className="text-xs text-patron-gray-400">{formatDate(post.createdAt)}</p>
+        </div>
+        {typeTag && (
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-patron-gray-600 bg-patron-gray-100 px-2 py-1 rounded-full shrink-0">
+            <typeTag.icon size={10} />
+            {typeTag.label}
+          </span>
+        )}
+      </div>
+
+      {post.isLocked ? (
+        <Link
+          to={postUrl}
+          className="block bg-gradient-to-br from-patron-black to-patron-black text-patron-white p-10 sm:p-14 text-center"
+        >
+          <Lock size={22} className="mx-auto mb-2 opacity-80" />
+          <p className="font-medium">
+            {post.visibility === "MEMBERS" ? "Members-only content" : "Followers-only content"}
+          </p>
+          <p className="text-patron-gray-400 text-xs mt-1">
+            {post.visibility === "MEMBERS" ? "Support to unlock exclusive posts" : `Follow @${post.creatorUsername} to unlock this post`}
+          </p>
+        </Link>
+      ) : (
+        <div className="px-4 pb-2">
+          <Link to={postUrl} className="block hover:opacity-80 transition-opacity">
+            <h3 className="font-bold text-patron-black">{post.title || "Untitled"}</h3>
+          </Link>
+
+          {thumbnail && <img src={thumbnail} alt="" className="mt-2 w-full max-h-96 object-cover rounded-xl" />}
+
+          {post.postType === "AUDIO" && post.audioUrl && (
+            <audio src={post.audioUrl} controls className="w-full mt-3 h-10" />
+          )}
+
+          {post.postType === "POLL" && <FeedPoll post={post} />}
+        </div>
+      )}
+
+      <div className="px-4 py-3 flex gap-5 text-patron-gray-500 text-sm border-t border-patron-gray-100">
+        <Link to={postUrl} className="flex items-center gap-1.5 hover:text-pink-500">
+          <Heart size={16} />
+          {post.likeCount || 0}
+        </Link>
+        <Link to={postUrl} className="flex items-center gap-1.5 hover:text-patron-green-600">
+          <MessageCircle size={16} />
+          {post.commentCount || 0}
+        </Link>
+      </div>
+    </div>
+  );
+};
 
 
 const ExploreCreator = () => {
@@ -108,6 +265,44 @@ const ExploreCreator = () => {
     hasMore: followingHasMore,
     loading: followingLoading,
     onLoadMore: loadMoreFollowing,
+  });
+
+  const [feedPosts, setFeedPosts] = useState([]);
+  const [feedPage, setFeedPage] = useState(0);
+  const [feedHasMore, setFeedHasMore] = useState(false);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [feedLoaded, setFeedLoaded] = useState(false);
+
+  const loadFeed = useCallback(async (pageToLoad) => {
+    setFeedLoading(true);
+    try {
+      const { data } = await postService.getFollowingFeed(pageToLoad, 10);
+      setFeedPosts((prev) => (pageToLoad === 0 ? data.content : [...prev, ...data.content]));
+      setFeedHasMore(!data.last);
+      setFeedPage(pageToLoad);
+    } catch {
+      if (pageToLoad === 0) setFeedPosts([]);
+      setFeedHasMore(false);
+    } finally {
+      setFeedLoading(false);
+      setFeedLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "following" && !feedLoaded) {
+      loadFeed(0);
+    }
+  }, [activeTab, feedLoaded, loadFeed]);
+
+  const loadMoreFeed = useCallback(() => {
+    if (!feedLoading) loadFeed(feedPage + 1);
+  }, [feedLoading, feedPage, loadFeed]);
+
+  const feedSentinelRef = useInfiniteScroll({
+    hasMore: feedHasMore,
+    loading: feedLoading,
+    onLoadMore: loadMoreFeed,
   });
 
   return (
@@ -315,56 +510,38 @@ const ExploreCreator = () => {
 
           {activeTab === "following" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
-              {/* Feed post */}
-              <div className="lg:col-span-2 bg-patron-white rounded-2xl sm:rounded-3xl border border-patron-gray-200 shadow-sm overflow-hidden">
-                {followingList.length > 0 ? (
+              {/* Feed */}
+              <div className="lg:col-span-2 space-y-4 sm:space-y-5">
+                {feedPosts.length > 0 ? (
                   <>
-                    <div className="p-4 border-b border-patron-gray-100 flex items-center gap-3">
-                      <img
-                        src={followingList[0].profilePictureUrl || "https://placehold.co/40x40"}
-                        className="w-10 h-10 rounded-full object-cover"
-                        alt={followingList[0].displayName || followingList[0].username}
-                      />
-                      <div>
-                        <span className="font-semibold text-sm sm:text-base">
-                          {followingList[0].displayName || followingList[0].username}
-                        </span>
-                        <p className="text-xs text-patron-gray-400">@{followingList[0].username}</p>
+                    {feedPosts.map((post) => (
+                      <FeedPostCard key={post.id} post={post} />
+                    ))}
+                    {feedHasMore && <div ref={feedSentinelRef} className="h-8" />}
+                    {feedLoading && feedPage > 0 && (
+                      <div className="flex justify-center py-4">
+                        <Loader size={18} className="animate-spin text-patron-green-500" />
                       </div>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-patron-black to-patron-black text-patron-white p-10 sm:p-16 text-center">
-                      <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-patron-white/10 flex items-center justify-center">
-                        <Lock size={24} />
-                      </div>
-                      <p className="font-medium text-lg">Members-only content</p>
-                      <p className="text-patron-gray-400 text-sm mt-1">
-                        Support to unlock exclusive posts
-                      </p>
-                    </div>
-
-                    <div className="p-4 flex gap-5 text-patron-gray-500">
-                      <button className="hover:text-patron-orange-500 transition-colors">
-                        <Heart size={20} />
-                      </button>
-                      <button className="hover:text-patron-green-500 transition-colors">
-                        <MessageCircle size={20} />
-                      </button>
-                      <button className="hover:text-patron-black transition-colors">
-                        <Share2 size={20} />
-                      </button>
-                    </div>
+                    )}
                   </>
-                ) : followingLoading ? (
-                  <div className="flex justify-center py-16">
+                ) : feedLoading ? (
+                  <div className="bg-patron-white rounded-2xl sm:rounded-3xl border border-patron-gray-200 shadow-sm flex justify-center py-16">
                     <Loader size={24} className="animate-spin text-patron-green-500" />
                   </div>
-                ) : (
-                  <div className="py-16 text-center text-patron-gray-500 px-6">
+                ) : followingList.length === 0 && followingLoaded ? (
+                  <div className="bg-patron-white rounded-2xl sm:rounded-3xl border border-patron-gray-200 shadow-sm py-16 text-center text-patron-gray-500 px-6">
                     <Users className="mx-auto mb-3 opacity-40" size={32} />
                     <p className="font-medium">You're not following any creators yet</p>
                     <p className="text-sm text-patron-gray-400 mt-1">
                       Follow creators to see their posts here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-patron-white rounded-2xl sm:rounded-3xl border border-patron-gray-200 shadow-sm py-16 text-center text-patron-gray-500 px-6">
+                    <Sparkles className="mx-auto mb-3 opacity-40" size={32} />
+                    <p className="font-medium">No posts yet</p>
+                    <p className="text-sm text-patron-gray-400 mt-1">
+                      Creators you follow haven't posted anything yet.
                     </p>
                   </div>
                 )}

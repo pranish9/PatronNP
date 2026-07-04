@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share as ShareIcon, MoreHorizontal, Lock, Music } from "lucide-react";
+import { Heart, MessageCircle, Share as ShareIcon, MoreHorizontal, Lock, Music, Pin, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 
@@ -8,6 +8,7 @@ import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "./UserNotFound";
 import postService from "../../services/postService";
 import ShareModal from "../../components/PublicCreatorLayout/ShareModal";
+import PollShareModal from "../../components/posts/PollShareModal";
 import { getAuthUser } from "../../utils/auth";
 
 const formatDate = (iso) =>
@@ -16,10 +17,58 @@ const formatDate = (iso) =>
 const avatarUrl = (name) =>
   `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "?")}&background=16a34a&color=fff&size=64`;
 
+const AlbumSlideshow = ({ images }) => {
+  const [index, setIndex] = useState(0);
+  if (!images || images.length === 0) return null;
+
+  const prev = () => setIndex((i) => (i - 1 + images.length) % images.length);
+  const next = () => setIndex((i) => (i + 1) % images.length);
+
+  return (
+    <div className="space-y-2">
+      <div className="relative rounded-2xl overflow-hidden bg-patron-black">
+        <img src={images[index]} alt="" className="w-full aspect-square sm:aspect-video object-contain" />
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+            >
+              <ChevronRight size={20} />
+            </button>
+            <span className="absolute top-3 right-3 text-xs font-medium text-white bg-black/50 px-2 py-1 rounded-full">
+              {index + 1}/{images.length}
+            </span>
+          </>
+        )}
+      </div>
+      {images.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                i === index ? "bg-patron-green-600" : "bg-patron-gray-300"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CreatorPostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
-  const { username, creator, loading, notFound, loggedIn } = useCreatorPage();
+  const { username, creator, isOwner, loading, notFound, loggedIn } = useCreatorPage();
   const authUser = getAuthUser();
 
   const [post, setPost] = useState(null);
@@ -29,6 +78,9 @@ const CreatorPostDetail = () => {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [myPollVote, setMyPollVote] = useState(null);
+  const [pollVoteCounts, setPollVoteCounts] = useState([]);
+  const [pollTotalVotes, setPollTotalVotes] = useState(0);
   const commentBoxRef = useRef(null);
 
   useEffect(() => {
@@ -40,6 +92,9 @@ const CreatorPostDetail = () => {
         setPost(data);
         setLiked(data.likedByCurrentUser);
         setLikeCount(data.likeCount || 0);
+        setMyPollVote(data.myPollVote ?? null);
+        setPollVoteCounts(data.pollVoteCounts || []);
+        setPollTotalVotes(data.pollTotalVotes || 0);
       })
       .catch(() => setPost(null))
       .finally(() => setPostLoading(false));
@@ -109,6 +164,45 @@ const CreatorPostDetail = () => {
     }
   };
 
+  const handleVote = async (optionIndex) => {
+    if (!loggedIn) {
+      navigate("/signin", { state: { from: `/${username}/posts/${postId}` } });
+      return;
+    }
+    const prevVote = myPollVote;
+    const prevCounts = pollVoteCounts;
+    const prevTotal = pollTotalVotes;
+
+    const nextCounts = [...pollVoteCounts];
+    if (prevVote !== null && prevVote !== undefined) {
+      nextCounts[prevVote] = Math.max(0, (nextCounts[prevVote] || 0) - 1);
+    }
+    nextCounts[optionIndex] = (nextCounts[optionIndex] || 0) + 1;
+    setMyPollVote(optionIndex);
+    setPollVoteCounts(nextCounts);
+    if (prevVote === null || prevVote === undefined) setPollTotalVotes(prevTotal + 1);
+
+    try {
+      const { data } = await postService.votePoll(postId, optionIndex);
+      setMyPollVote(data.myPollVote ?? optionIndex);
+      setPollVoteCounts(data.pollVoteCounts || nextCounts);
+      setPollTotalVotes(data.pollTotalVotes ?? prevTotal);
+    } catch {
+      setMyPollVote(prevVote);
+      setPollVoteCounts(prevCounts);
+      setPollTotalVotes(prevTotal);
+      toast.error("Failed to vote");
+    }
+  };
+
+  const handleDownloadResults = async () => {
+    try {
+      await postService.downloadPollResultsCsv(postId);
+    } catch {
+      toast.error("Failed to download results");
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24">
       <nav className="text-sm text-patron-gray-400 mb-4 flex items-center gap-1.5 flex-wrap">
@@ -123,6 +217,12 @@ const CreatorPostDetail = () => {
         <span className="text-patron-gray-600 truncate">{post.title}</span>
       </nav>
 
+      {post.pinned && (
+        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-patron-green-700 bg-patron-green-100 px-2 py-1 rounded-full mb-2">
+          <Pin size={10} />
+          Pinned post
+        </span>
+      )}
       <h1 className="text-2xl sm:text-3xl font-bold text-patron-black">{post.title}</h1>
       <p className="text-sm text-patron-gray-400 mt-1">{formatDate(post.createdAt)}</p>
 
@@ -185,11 +285,7 @@ const CreatorPostDetail = () => {
           {post.postType === "ALBUM" && (
             <div className="space-y-4">
               {post.caption && <p className="text-patron-black">{post.caption}</p>}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {(post.images || []).map((url) => (
-                  <img key={url} src={url} alt="" className="w-full aspect-square object-cover rounded-xl" />
-                ))}
-              </div>
+              <AlbumSlideshow images={post.images} />
             </div>
           )}
 
@@ -206,12 +302,58 @@ const CreatorPostDetail = () => {
           )}
 
           {post.postType === "POLL" && (
-            <div className="space-y-2">
-              {(post.pollOptions || []).map((opt, i) => (
-                <div key={i} className="px-4 py-3 bg-patron-gray-50 border border-patron-gray-200 rounded-xl text-patron-black">
-                  {opt}
-                </div>
-              ))}
+            <div className="space-y-4">
+              {post.caption && <p className="text-patron-black">{post.caption}</p>}
+              <div className="space-y-2">
+                {(post.pollOptions || []).map((opt, i) => {
+                  const count = pollVoteCounts[i] || 0;
+                  const pct = pollTotalVotes > 0 ? Math.round((count / pollTotalVotes) * 100) : 0;
+                  const selected = myPollVote === i;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleVote(i)}
+                      className={`relative w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border overflow-hidden text-left transition-colors ${
+                        selected
+                          ? "border-patron-green-600"
+                          : "border-patron-gray-200 hover:border-patron-gray-300"
+                      }`}
+                    >
+                      <div
+                        className="absolute inset-y-0 left-0 bg-patron-green-100 transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                      <span className="relative flex items-center gap-2 font-medium text-patron-black">
+                        <span
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                            selected ? "bg-patron-green-600 border-patron-green-600" : "border-patron-gray-300"
+                          }`}
+                        >
+                          {selected && <Check size={10} className="text-white" />}
+                        </span>
+                        {opt}
+                      </span>
+                      <span className="relative text-sm font-semibold text-patron-gray-600 shrink-0">{pct}%</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-patron-gray-500">
+                <span>
+                  {pollTotalVotes} vote{pollTotalVotes === 1 ? "" : "s"}
+                </span>
+                {isOwner && (
+                  <>
+                    <span>•</span>
+                    <button
+                      onClick={handleDownloadResults}
+                      className="text-patron-green-700 font-medium hover:underline"
+                    >
+                      Download result
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -256,7 +398,20 @@ const CreatorPostDetail = () => {
         </div>
       </div>
 
-      <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} url={postUrl} title={post.title} />
+      {post.postType === "POLL" ? (
+        <PollShareModal
+          isOpen={shareOpen}
+          onClose={() => setShareOpen(false)}
+          url={postUrl}
+          question={post.title}
+          options={post.pollOptions}
+          voteCounts={pollVoteCounts}
+          totalVotes={pollTotalVotes}
+          myVote={myPollVote}
+        />
+      ) : (
+        <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} url={postUrl} title={post.title} />
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, Pin, Images, Music, BarChart2 } from "lucide-react";
 
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "./UserNotFound";
@@ -11,32 +11,41 @@ const FILTERS = [
   { id: "popular", label: "Popular" },
 ];
 
-const GRADIENTS = [
-  "from-patron-green-400 to-patron-green-600",
-  "from-patron-orange-400 to-patron-orange-600",
-  "from-patron-green-500 to-patron-orange-400",
-  "from-patron-orange-500 to-patron-green-500",
-];
-
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 
-const PostCard = ({ post, username }) => {
-  const gradient = GRADIENTS[post.id % GRADIENTS.length];
-  const thumbnail = post.images?.[0];
+// Album posts have their own images[]; a rich-text "post" only has inline <img> tags
+// buried in its HTML content, so pull the first one out to use as the card thumbnail.
+const firstContentImage = (html) => html?.match(/<img[^>]+src="([^"]+)"/)?.[1] || null;
+
+const TYPE_TAGS = {
+  ALBUM: { label: "Album", icon: Images },
+  AUDIO: { label: "Audio", icon: Music },
+  POLL: { label: "Poll", icon: BarChart2 },
+};
+
+const PostCard = ({ post, username, creatorAvatar }) => {
+  const thumbnail = post.images?.[0] || firstContentImage(post.content) || creatorAvatar;
+  const typeTag = TYPE_TAGS[post.postType];
 
   return (
     <Link
       to={`/${username}/posts/${post.id}`}
-      className="rounded-2xl overflow-hidden border border-patron-gray-200 hover:shadow-md transition-shadow bg-patron-white"
+      className="relative rounded-2xl overflow-hidden border border-patron-gray-200 hover:shadow-md transition-shadow bg-patron-white"
     >
-      {thumbnail ? (
-        <img src={thumbnail} alt="" className="w-full aspect-square object-cover" />
-      ) : (
-        <div className={`w-full aspect-square bg-gradient-to-br ${gradient} flex items-center justify-center p-4`}>
-          <span className="text-white font-semibold text-center line-clamp-3">{post.title}</span>
-        </div>
+      {post.pinned && (
+        <span className="absolute top-2 left-2 z-10 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+          <Pin size={10} />
+          Pinned
+        </span>
       )}
+      {typeTag && (
+        <span className="absolute top-2 right-2 z-10 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+          <typeTag.icon size={10} />
+          {typeTag.label}
+        </span>
+      )}
+      <img src={thumbnail} alt="" className="w-full aspect-square object-cover" />
       <div className="p-3">
         <h3 className="font-semibold text-patron-black truncate">{post.title || "Untitled"}</h3>
         <p className="text-xs text-patron-gray-400 mt-0.5">{formatDate(post.createdAt)}</p>
@@ -46,7 +55,10 @@ const PostCard = ({ post, username }) => {
 };
 
 const CreatorPosts = () => {
-  const { username, loading, notFound } = useCreatorPage();
+  const { username, displayCreator, loading, notFound } = useCreatorPage();
+  const creatorAvatar =
+    displayCreator?.profilePictureUrl ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(displayCreator?.displayName || username)}&background=16a34a&color=fff&size=256`;
   const [posts, setPosts] = useState([]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -119,7 +131,7 @@ const CreatorPosts = () => {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {filtered.map((post) => (
-            <PostCard key={post.id} post={post} username={username} />
+            <PostCard key={post.id} post={post} username={username} creatorAvatar={creatorAvatar} />
           ))}
         </div>
       )}

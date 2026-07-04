@@ -13,3 +13,14 @@ export const uploadImageToCloudinary = async (file) => {
 
   return res.data.url;
 };
+
+export const uploadAudioToCloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await apiClient.post("/creator/media/upload-audio", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data.url;
+};

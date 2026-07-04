@@ -13,10 +13,10 @@ import {
   Video,
   Code,
   X,
-  Plus,
   Music,
   Loader2,
   Trash2,
+  GripVertical,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -25,7 +25,17 @@ import PostSidebar from "../components/posts/PostSidebar";
 import FileDropzone from "../components/posts/FileDropzone";
 import PromptModal from "../components/posts/PromptModal";
 import PostLiveModal from "../components/posts/PostLiveModal";
-import { uploadImageToCloudinary } from "../services/cloudinaryService";
+import { uploadImageToCloudinary, uploadAudioToCloudinary } from "../services/cloudinaryService";
+
+// The backend stores publishAt as a plain LocalDateTime (no timezone). Date#toISOString()
+// converts to UTC and appends "Z", which silently shifts the clock time by the local
+// offset once the backend reads those digits back as if they were already local time —
+// a post "5 minutes from now" in Nepal (UTC+5:45) would land ~5h45m in the past there,
+// making it look instantly published instead of scheduled. Send the wall-clock value as-is.
+const toLocalDateTimeString = (date) => {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
 
 const getYouTubeEmbedUrl = (url) => {
   const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
@@ -67,7 +77,7 @@ const PostEditor = () => {
         setExisting(data);
         setTitle(data.title || "");
         setCaption(data.caption || "");
-        setImages((data.images || []).map((url) => ({ url })));
+        setImages((data.images || []).map((url) => ({ id: url, url })));
         setAudioFile(data.audioUrl ? { url: data.audioUrl, name: data.audioName } : null);
         setPollOptions(data.pollOptions?.length ? data.pollOptions : ["", ""]);
         setVisibility(data.visibility || "PUBLIC");
@@ -214,17 +224,47 @@ const PostEditor = () => {
     document.execCommand("insertHTML", false, `<code>${selection}</code>`);
   };
 
+  // Album images used to just be URL.createObjectURL(file) — a blob: URL that only exists
+  // in this browser tab. It got saved straight into the post payload, so the image "worked"
+  // for the moment you picked it and broke for everyone (including you, after a reload) the
+  // instant that URL went away. Upload to Cloudinary like inline post images already do, and
+  // show the local blob URL only as an instant preview until the real URL comes back.
   const handleImageFiles = (files) => {
-    const next = files.map((file) => ({ file, url: URL.createObjectURL(file) }));
+    const next = files.map((file) => ({
+      id: `${Date.now()}-${Math.random()}`,
+      url: URL.createObjectURL(file),
+      uploading: true,
+    }));
     setImages((prev) => [...prev, ...next]);
+
+    files.forEach(async (file, i) => {
+      const { id } = next[i];
+      try {
+        const url = await uploadImageToCloudinary(file);
+        setImages((prev) => prev.map((img) => (img.id === id ? { ...img, url, uploading: false } : img)));
+      } catch (err) {
+        toast.error(err.message || "Image upload failed");
+        setImages((prev) => prev.filter((img) => img.id !== id));
+      }
+    });
   };
 
   const removeImage = (index) => setImages((prev) => prev.filter((_, i) => i !== index));
 
-  const handleAudioFiles = (files) => {
+  // Same bug the album-photo fix addressed: a blob: URL only exists in this tab, so
+  // saving it directly would break the audio for everyone (including you) after a reload.
+  // Show it instantly via the local blob URL, then swap in the real Cloudinary URL.
+  const handleAudioFiles = async (files) => {
     const file = files[0];
     if (!file) return;
-    setAudioFile({ file, url: URL.createObjectURL(file), name: file.name });
+    setAudioFile({ url: URL.createObjectURL(file), name: file.name, uploading: true });
+    try {
+      const url = await uploadAudioToCloudinary(file);
+      setAudioFile((prev) => (prev ? { ...prev, url, uploading: false } : prev));
+    } catch (err) {
+      toast.error(err.message || "Audio upload failed");
+      setAudioFile(null);
+    }
   };
 
   const updatePollOption = (index, value) =>
@@ -234,6 +274,19 @@ const PostEditor = () => {
 
   const removePollOption = (index) =>
     setPollOptions((prev) => prev.filter((_, i) => i !== index));
+
+  const dragChoiceIndexRef = useRef(null);
+  const reorderPollOptions = (toIndex) => {
+    const fromIndex = dragChoiceIndexRef.current;
+    dragChoiceIndexRef.current = null;
+    if (fromIndex === null || fromIndex === toIndex) return;
+    setPollOptions((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
 
   const buildPayload = () => {
     const base = {
@@ -253,6 +306,14 @@ const PostEditor = () => {
   const validate = (publishing) => {
     if (!title.trim()) {
       toast.error("Add a title first");
+      return false;
+    }
+    if (type === "album" && images.some((img) => img.uploading)) {
+      toast.error("Wait for images to finish uploading");
+      return false;
+    }
+    if (type === "audio" && audioFile?.uploading) {
+      toast.error("Wait for the audio to finish uploading");
       return false;
     }
     if (!publishing) return true;
@@ -311,12 +372,18 @@ const PostEditor = () => {
 
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1 min-w-0">
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={type === "post" ? "Title" : "Add title"}
-              className="w-full text-3xl font-bold text-patron-black placeholder-patron-gray-300 outline-none mb-4"
-            />
+            {type === "poll" && (
+              <h2 className="text-2xl font-bold text-patron-black text-center mb-6">Create Poll</h2>
+            )}
+
+            {type !== "poll" && (
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={type === "post" ? "Title" : "Add title"}
+                className="w-full text-3xl font-bold text-patron-black placeholder-patron-gray-300 outline-none mb-4"
+              />
+            )}
 
             {type === "post" && (
               <>
@@ -410,8 +477,17 @@ const PostEditor = () => {
                 {images.length > 0 && (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                     {images.map((img, i) => (
-                      <div key={img.url} className="relative aspect-square rounded-xl overflow-hidden group">
-                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                      <div key={img.id || img.url} className="relative aspect-square rounded-xl overflow-hidden group">
+                        <img
+                          src={img.url}
+                          alt=""
+                          className={`w-full h-full object-cover ${img.uploading ? "opacity-50" : ""}`}
+                        />
+                        {img.uploading && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Loader2 size={20} className="animate-spin text-white" />
+                          </div>
+                        )}
                         <button
                           onClick={() => removeImage(i)}
                           className="absolute top-1.5 right-1.5 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -436,10 +512,13 @@ const PostEditor = () => {
                 {audioFile ? (
                   <div className="flex items-center gap-3 bg-patron-gray-50 border border-patron-gray-200 rounded-2xl p-4">
                     <div className="w-12 h-12 rounded-xl bg-patron-green-100 flex items-center justify-center text-patron-green-600 shrink-0">
-                      <Music size={20} />
+                      {audioFile.uploading ? <Loader2 size={20} className="animate-spin" /> : <Music size={20} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-patron-black truncate">{audioFile.name}</p>
+                      <p className="text-sm font-semibold text-patron-black truncate">
+                        {audioFile.name}
+                        {audioFile.uploading && <span className="text-patron-gray-400 font-normal"> — uploading…</span>}
+                      </p>
                       <audio src={audioFile.url} controls className="w-full mt-1 h-8" />
                     </div>
                     <button onClick={() => setAudioFile(null)} className="text-patron-gray-400 hover:text-red-600 shrink-0">
@@ -464,32 +543,67 @@ const PostEditor = () => {
             )}
 
             {type === "poll" && (
-              <div className="space-y-3">
-                {pollOptions.map((opt, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      value={opt}
-                      onChange={(e) => updatePollOption(i, e.target.value)}
-                      placeholder={`Option ${i + 1}`}
-                      className="flex-1 px-4 py-2.5 text-sm bg-patron-gray-100 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
-                    />
-                    {pollOptions.length > 2 && (
-                      <button
-                        onClick={() => removePollOption(i)}
-                        className="text-patron-gray-400 hover:text-red-600 shrink-0"
+              <div className="space-y-5">
+                <div>
+                  <label className="text-sm font-bold text-patron-black">Question</label>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Ask a question.."
+                    className="mt-1.5 w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold text-patron-black">Description</label>
+                  <textarea
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    rows={3}
+                    placeholder="Provide more information about your poll"
+                    className="mt-1.5 w-full px-4 py-3 text-sm bg-patron-gray-100 border-none rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold text-patron-black">Choices</label>
+                  <div className="mt-2 space-y-2">
+                    {pollOptions.map((opt, i) => (
+                      <div
+                        key={i}
+                        draggable
+                        onDragStart={() => (dragChoiceIndexRef.current = i)}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={() => reorderPollOptions(i)}
+                        className="flex items-center gap-2 bg-patron-gray-100 rounded-xl pr-3"
                       >
-                        <X size={16} />
-                      </button>
-                    )}
+                        <span className="pl-2 text-patron-gray-400 cursor-grab shrink-0">
+                          <GripVertical size={16} />
+                        </span>
+                        <input
+                          value={opt}
+                          onChange={(e) => updatePollOption(i, e.target.value)}
+                          placeholder="Add"
+                          className="flex-1 py-3 text-sm bg-transparent border-none focus:outline-none"
+                        />
+                        {pollOptions.length > 2 && (
+                          <button
+                            onClick={() => removePollOption(i)}
+                            className="text-patron-gray-400 hover:text-red-600 shrink-0"
+                          >
+                            <X size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <button
-                  onClick={addPollOption}
-                  className="flex items-center gap-1.5 text-sm font-semibold text-patron-green-700 hover:text-patron-green-800"
-                >
-                  <Plus size={15} />
-                  Add option
-                </button>
+                  <button
+                    onClick={addPollOption}
+                    className="mt-3 px-4 py-2 border border-patron-gray-300 rounded-full text-sm font-semibold text-patron-black hover:bg-patron-gray-50"
+                  >
+                    + Add a choice
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -500,9 +614,9 @@ const PostEditor = () => {
             onVisibilityChange={setVisibility}
             selectedCategories={selectedCategories}
             onToggleCategory={toggleCategory}
-            onPublishNow={() => save("PUBLISHED", new Date().toISOString())}
+            onPublishNow={() => save("PUBLISHED", toLocalDateTimeString(new Date()))}
             onSaveDraft={() => save("DRAFT")}
-            onSchedule={(datetime) => save("SCHEDULED", new Date(datetime).toISOString())}
+            onSchedule={(datetime) => save("SCHEDULED", datetime)}
           />
         </div>
       </div>
