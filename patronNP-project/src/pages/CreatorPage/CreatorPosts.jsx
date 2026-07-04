@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Pin, Images, Music, BarChart2 } from "lucide-react";
+import { Search, Pin, Images, Music, BarChart2, Crown, Users } from "lucide-react";
 
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "./UserNotFound";
@@ -24,9 +24,15 @@ const TYPE_TAGS = {
   POLL: { label: "Poll", icon: BarChart2 },
 };
 
+const VISIBILITY_TAGS = {
+  FOLLOWERS: { label: "Followers", icon: Users },
+  MEMBERS: { label: "Members", icon: Crown },
+};
+
 const PostCard = ({ post, username, creatorAvatar }) => {
   const thumbnail = post.images?.[0] || firstContentImage(post.content) || creatorAvatar;
   const typeTag = TYPE_TAGS[post.postType];
+  const visibilityTag = VISIBILITY_TAGS[post.visibility];
 
   return (
     <Link
@@ -39,13 +45,24 @@ const PostCard = ({ post, username, creatorAvatar }) => {
           Pinned
         </span>
       )}
-      {typeTag && (
-        <span className="absolute top-2 right-2 z-10 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
-          <typeTag.icon size={10} />
-          {typeTag.label}
-        </span>
-      )}
-      <img src={thumbnail} alt="" className="w-full aspect-square object-cover" />
+      <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
+        {typeTag && (
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-black/60 backdrop-blur-sm px-2 py-1 rounded-full">
+            <typeTag.icon size={10} />
+            {typeTag.label}
+          </span>
+        )}
+        {visibilityTag && (
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-patron-green-700/90 backdrop-blur-sm px-2 py-1 rounded-full">
+            <visibilityTag.icon size={10} />
+            {visibilityTag.label}
+          </span>
+        )}
+      </div>
+      <div className="relative w-full aspect-square">
+        <img src={thumbnail} alt="" className="w-full h-full object-cover" />
+        {post.locked && <div className="absolute inset-0 bg-patron-black/40" />}
+      </div>
       <div className="p-3">
         <h3 className="font-semibold text-patron-black truncate">{post.title || "Untitled"}</h3>
         <p className="text-xs text-patron-gray-400 mt-0.5">{formatDate(post.createdAt)}</p>

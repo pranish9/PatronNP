@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import {
   Search,
   X,
-  Lock,
   Heart,
   MessageCircle,
   TrendingUp,
@@ -16,6 +15,7 @@ import {
   Music,
   Vote,
   Check,
+  Crown,
 } from "lucide-react";
 
 import Layout from "../../components/creatorLayout/Layout";
@@ -105,8 +105,14 @@ const FeedPoll = ({ post }) => {
   );
 };
 
+const FEED_VISIBILITY_TAGS = {
+  FOLLOWERS: { label: "Followers", icon: Users },
+  MEMBERS: { label: "Members", icon: Crown },
+};
+
 const FeedPostCard = ({ post }) => {
   const typeTag = FEED_TYPE_TAGS[post.postType];
+  const visibilityTag = FEED_VISIBILITY_TAGS[post.visibility];
   const thumbnail = post.images?.[0] || post.content?.match(/<img[^>]+src="([^"]+)"/)?.[1] || null;
   const postUrl = `/${post.creatorUsername}/posts/${post.id}`;
   const avatarUrl =
@@ -132,36 +138,27 @@ const FeedPostCard = ({ post }) => {
             {typeTag.label}
           </span>
         )}
+        {visibilityTag && (
+          <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-white bg-patron-green-700 px-2 py-1 rounded-full shrink-0">
+            <visibilityTag.icon size={10} />
+            {visibilityTag.label}
+          </span>
+        )}
       </div>
 
-      {post.isLocked ? (
-        <Link
-          to={postUrl}
-          className="block bg-gradient-to-br from-patron-black to-patron-black text-patron-white p-10 sm:p-14 text-center"
-        >
-          <Lock size={22} className="mx-auto mb-2 opacity-80" />
-          <p className="font-medium">
-            {post.visibility === "MEMBERS" ? "Members-only content" : "Followers-only content"}
-          </p>
-          <p className="text-patron-gray-400 text-xs mt-1">
-            {post.visibility === "MEMBERS" ? "Support to unlock exclusive posts" : `Follow @${post.creatorUsername} to unlock this post`}
-          </p>
+      <div className="px-4 pb-2">
+        <Link to={postUrl} className="block hover:opacity-80 transition-opacity">
+          <h3 className="font-bold text-patron-black">{post.title || "Untitled"}</h3>
         </Link>
-      ) : (
-        <div className="px-4 pb-2">
-          <Link to={postUrl} className="block hover:opacity-80 transition-opacity">
-            <h3 className="font-bold text-patron-black">{post.title || "Untitled"}</h3>
-          </Link>
 
-          {thumbnail && <img src={thumbnail} alt="" className="mt-2 w-full max-h-96 object-cover rounded-xl" />}
+        {thumbnail && <img src={thumbnail} alt="" className="mt-2 w-full max-h-96 object-cover rounded-xl" />}
 
-          {post.postType === "AUDIO" && post.audioUrl && (
-            <audio src={post.audioUrl} controls className="w-full mt-3 h-10" />
-          )}
+        {post.postType === "AUDIO" && post.audioUrl && (
+          <audio src={post.audioUrl} controls className="w-full mt-3 h-10" />
+        )}
 
-          {post.postType === "POLL" && <FeedPoll post={post} />}
-        </div>
-      )}
+        {post.postType === "POLL" && <FeedPoll post={post} />}
+      </div>
 
       <div className="px-4 py-3 flex gap-5 text-patron-gray-500 text-sm border-t border-patron-gray-100">
         <Link to={postUrl} className="flex items-center gap-1.5 hover:text-pink-500">

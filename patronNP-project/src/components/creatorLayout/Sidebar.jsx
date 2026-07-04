@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import {
   Home, LayoutDashboard, Search, Heart, Lock, ShoppingBag,
-  PenTool, ChevronDown, ChevronUp, FileText, Image,
+  PenTool,
   Code, Settings as SettingsIcon, Menu, X, UserCircle, LogOut
 } from 'lucide-react';
 
@@ -23,7 +23,6 @@ const Sidebar = () => {
   };
 
 
-  const [isPublishOpen, setIsPublishOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [activePath, setActivePath] = useState(location.pathname);
 
@@ -41,11 +40,6 @@ const Sidebar = () => {
     { name: 'Supporters', icon: Heart, path: '/supporters' },
     { name: 'Memberships', icon: Lock, path: '/memberships' },
     { name: 'Shop', icon: ShoppingBag, path: '/shop' },
-  ];
-
-  const publishItems = [
-    { name: 'Posts', icon: FileText, path: '/posts' },
-    { name: 'Gallery', icon: Image, path: '/gallery' },
   ];
 
   const settingsItems = [
@@ -133,28 +127,7 @@ const Sidebar = () => {
               ))}
 
               {/* Publish */}
-              <div
-                onClick={() => setIsPublishOpen(!isPublishOpen)}
-                className="flex items-center justify-between px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-xl cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <PenTool size={20} />
-                  <span>Publish</span>
-                </div>
-                {isPublishOpen ? (
-                  <ChevronUp size={16} />
-                ) : (
-                  <ChevronDown size={16} />
-                )}
-              </div>
-
-              {isPublishOpen && (
-                <div className="pl-8 flex flex-col gap-1 mt-1">
-                  {publishItems.map((item) => (
-                    <NavItem key={item.path} item={item} />
-                  ))}
-                </div>
-              )}
+              <NavItem item={{ name: 'Publish', icon: PenTool, path: '/posts' }} />
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "./UserNotFound";
 import postService from "../../services/postService";
+import userService from "../../services/userService";
 import ShareModal from "../../components/PublicCreatorLayout/ShareModal";
 import PollShareModal from "../../components/posts/PollShareModal";
 import { getAuthUser } from "../../utils/auth";
@@ -81,7 +82,18 @@ const CreatorPostDetail = () => {
   const [myPollVote, setMyPollVote] = useState(null);
   const [pollVoteCounts, setPollVoteCounts] = useState([]);
   const [pollTotalVotes, setPollTotalVotes] = useState(0);
+  const [myProfilePictureUrl, setMyProfilePictureUrl] = useState(null);
   const commentBoxRef = useRef(null);
+
+  useEffect(() => {
+    if (!loggedIn || !authUser?.username) return;
+    // The Edit Page picture (CreatorProfile) is what shows everywhere else the
+    // viewer appears as a creator — not the plain account-settings picture.
+    userService
+      .getCreatorPage(authUser.username)
+      .then(({ data }) => setMyProfilePictureUrl(data.profilePictureUrl || null))
+      .catch(() => {});
+  }, [loggedIn, authUser?.username]);
 
   useEffect(() => {
     if (!username || !postId) return;
@@ -258,14 +270,16 @@ const CreatorPostDetail = () => {
         </button>
       </div>
 
-      {post.isLocked ? (
-        <div className="mt-6 p-8 sm:p-12 bg-gradient-to-br from-patron-black to-patron-gray-800 rounded-2xl text-center text-white">
+      {post.locked ? (
+        <div className="mt-6 p-8 sm:p-12 bg-patron-black/40 rounded-2xl text-center text-white">
           <Lock className="mx-auto mb-3 opacity-80" size={32} />
           <p className="font-semibold text-lg">
             {post.visibility === "MEMBERS" ? "Members-only content" : "Followers-only content"}
           </p>
           <p className="text-patron-gray-300 text-sm mt-1">
-            Follow {creator?.displayName || username} to see this post.
+            {post.visibility === "MEMBERS"
+              ? `Support ${creator?.displayName || username} to see this post.`
+              : `Follow ${creator?.displayName || username} to see this post.`}
           </p>
         </div>
       ) : (
@@ -368,7 +382,11 @@ const CreatorPostDetail = () => {
           <div className="space-y-3 mb-4">
             {comments.map((c) => (
               <div key={c.id} className="flex items-start gap-3">
-                <img src={avatarUrl(c.commenterDisplayName)} alt="" className="w-8 h-8 rounded-full shrink-0" />
+                <img
+                  src={c.commenterProfilePictureUrl || avatarUrl(c.commenterDisplayName)}
+                  alt=""
+                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                />
                 <div className="bg-patron-gray-50 rounded-xl px-3 py-2 flex-1 min-w-0">
                   <p className="text-xs font-semibold text-patron-black">{c.commenterDisplayName}</p>
                   <p className="text-sm text-patron-gray-700 mt-0.5">{c.text}</p>
@@ -379,7 +397,11 @@ const CreatorPostDetail = () => {
         )}
 
         <div className="flex items-start gap-3">
-          <img src={avatarUrl(authUser?.username || "You")} alt="" className="w-8 h-8 rounded-full shrink-0" />
+          <img
+            src={myProfilePictureUrl || avatarUrl(authUser?.username || "You")}
+            alt=""
+            className="w-8 h-8 rounded-full object-cover shrink-0"
+          />
           <div className="flex-1 flex gap-2">
             <input
               value={commentText}
