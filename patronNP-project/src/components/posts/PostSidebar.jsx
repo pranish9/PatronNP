@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 import usePostStore from "../../stores/postStore";
 import PromptModal from "./PromptModal";
+import membershipService from "../../services/membershipService";
 
 const MIN_SCHEDULE_LEAD_MS = 5 * 60 * 1000;
 
@@ -25,6 +26,8 @@ const PostSidebar = ({
   onVisibilityChange,
   selectedCategories,
   onToggleCategory,
+  selectedLevelIds,
+  onToggleLevel,
   onPublishNow,
   onSaveDraft,
   onSchedule,
@@ -36,6 +39,17 @@ const PostSidebar = ({
   const [scheduleValue, setScheduleValue] = useState("");
   const [editingCategories, setEditingCategories] = useState(false);
   const [newCategoryModalOpen, setNewCategoryModalOpen] = useState(false);
+  const [levels, setLevels] = useState([]);
+  const [levelsLoaded, setLevelsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (visibility !== "MEMBERS" || levelsLoaded) return;
+    membershipService
+      .getLevels()
+      .then((res) => setLevels(res.data || []))
+      .catch(() => {})
+      .finally(() => setLevelsLoaded(true));
+  }, [visibility, levelsLoaded]);
 
   const publishRef = useRef(null);
   const visibilityRef = useRef(null);
@@ -174,6 +188,49 @@ const PostSidebar = ({
             </div>
           )}
         </div>
+
+        {visibility === "MEMBERS" && (
+          <div className="space-y-2 pt-1">
+            <p className="text-xs font-semibold text-patron-gray-400 uppercase tracking-wide">Select levels</p>
+            {!levelsLoaded ? (
+              <p className="text-xs text-patron-gray-400">Loading levels...</p>
+            ) : levels.length === 0 ? (
+              <p className="text-xs text-patron-gray-400">
+                You haven't created any membership levels yet — this post will be visible to any member.
+              </p>
+            ) : (
+              <div className="divide-y divide-patron-gray-100">
+                {levels.map((level) => (
+                  <label
+                    key={level.id}
+                    className="flex items-center justify-between gap-2 py-2.5 cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedLevelIds.includes(level.id)}
+                        onChange={() => onToggleLevel(level.id)}
+                        className="w-4 h-4 rounded accent-patron-black shrink-0"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-patron-black truncate">{level.name}</span>
+                        <span className="block text-xs text-patron-gray-400">Rs {level.monthlyPrice} per month</span>
+                      </span>
+                    </span>
+                    {!level.published && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-patron-orange-50 text-patron-orange-700 shrink-0">
+                        Paused
+                      </span>
+                    )}
+                  </label>
+                ))}
+              </div>
+            )}
+            {levels.length > 0 && selectedLevelIds.length === 0 && (
+              <p className="text-[11px] text-patron-gray-400">No levels selected — visible to any member.</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-patron-white rounded-2xl border border-patron-gray-200 p-4 space-y-3">

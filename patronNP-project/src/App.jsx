@@ -14,6 +14,9 @@ import Layout from "./components/creatorLayout/Layout";
 // Protected Pages
 import Dashboard from "./pages/Dashboard";
 import Supporters from "./pages/Supporters";
+import Memberships from "./pages/Memberships";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminProtectedRoute from "./components/auth/AdminProtectedRoute";
 import AccountPage from "./pages/AccountPage";
 import OnboardingProfile from "./pages/OnboardingSteps/OnboardingProfile";
 import OnboardingPhase2 from "./pages/OnboardingSteps/OnboardingPhase2";
@@ -156,6 +159,22 @@ const App = () => {
           <ProtectedRoute>
             <Supporters />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/memberships"
+        element={
+          <ProtectedRoute>
+            <Memberships />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminProtectedRoute>
+            <AdminDashboard />
+          </AdminProtectedRoute>
         }
       />
 

@@ -32,6 +32,18 @@ const SignIn = () => {
     const user = localStorage.getItem("user");
     if (!token) return;
 
+    let role;
+    try {
+      role = JSON.parse(user || "null")?.role;
+    } catch {
+      role = null;
+    }
+
+    if (role === "ADMIN") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+
   const onboardingCompleted =
     localStorage.getItem("onboardingCompleted");
 
@@ -81,12 +93,14 @@ const googleLogin = useGoogleLogin({
         String(data.onboardingCompleted));
       
       toast.success("Logged in successfully with Google");
-      if (data.onboardingCompleted) {
+      if (data.role === "ADMIN") {
+        navigate("/admin");
+      } else if (data.onboardingCompleted) {
         navigate("/dashboard");
       } else {
         navigate("/onboarding");
       }
-      
+
     } catch (err) {
       const message =
         err.response?.data?.message ||
@@ -183,7 +197,9 @@ const googleLogin = useGoogleLogin({
         String(res.data.onboardingCompleted)
       );
 
-        if (res.data.onboardingCompleted) {
+        if (res.data.role === "ADMIN") {
+          navigate("/admin");
+        } else if (res.data.onboardingCompleted) {
           navigate("/dashboard");
         } else {
           navigate("/onboarding");

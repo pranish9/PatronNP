@@ -37,6 +37,18 @@ export const initiateKhaltiTip = async ({
   return data;
 };
 
+export const initiateKhaltiMembership = async ({ creatorUsername, levelId, billingCycle, buyerEmail, buyerPhone }) => {
+  const { data } = await apiClient.post("/payment/khalti/membership/initiate", {
+    creatorUsername,
+    levelId,
+    billingCycle,
+    buyerEmail,
+    buyerPhone,
+    frontendOrigin: window.location.origin,
+  });
+  return data;
+};
+
 export const redirectToKhalti = (paymentUrl) => {
   window.location.href = paymentUrl;
 };

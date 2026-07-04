@@ -56,6 +56,7 @@ const PostEditor = () => {
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [visibility, setVisibility] = useState("PUBLIC");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedLevelIds, setSelectedLevelIds] = useState([]);
 
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -82,6 +83,7 @@ const PostEditor = () => {
         setPollOptions(data.pollOptions?.length ? data.pollOptions : ["", ""]);
         setVisibility(data.visibility || "PUBLIC");
         setSelectedCategories(data.categories || []);
+        setSelectedLevelIds(data.allowedLevelIds || []);
         if (editorRef.current && data.content) {
           editorRef.current.innerHTML = data.content;
         }
@@ -92,6 +94,11 @@ const PostEditor = () => {
   const toggleCategory = (cat) =>
     setSelectedCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+
+  const toggleLevel = (levelId) =>
+    setSelectedLevelIds((prev) =>
+      prev.includes(levelId) ? prev.filter((id) => id !== levelId) : [...prev, levelId]
     );
 
   const saveSelection = () => {
@@ -294,6 +301,7 @@ const PostEditor = () => {
       title: title.trim(),
       visibility,
       categories: selectedCategories,
+      allowedLevelIds: visibility === "MEMBERS" ? selectedLevelIds : [],
       caption,
     };
     if (type === "post") return { ...base, content: editorRef.current?.innerHTML || "" };
@@ -614,6 +622,8 @@ const PostEditor = () => {
             onVisibilityChange={setVisibility}
             selectedCategories={selectedCategories}
             onToggleCategory={toggleCategory}
+            selectedLevelIds={selectedLevelIds}
+            onToggleLevel={toggleLevel}
             onPublishNow={() => save("PUBLISHED", toLocalDateTimeString(new Date()))}
             onSaveDraft={() => save("DRAFT")}
             onSchedule={(datetime) => save("SCHEDULED", datetime)}
