@@ -49,6 +49,16 @@ export const initiateEsewaMembership = async ({ creatorUsername, levelId, billin
   return data;
 };
 
+export const initiateEsewaRefundPayout = async ({ subscriptionId, buyerEmail, buyerPhone }) => {
+  const { data } = await apiClient.post("/payment/esewa/refund/initiate", {
+    subscriptionId,
+    buyerEmail,
+    buyerPhone,
+    frontendOrigin: window.location.origin,
+  });
+  return data;
+};
+
 export const redirectToEsewa = ({ formUrl, fields }) => {
   const form = document.createElement("form");
   form.method = "POST";

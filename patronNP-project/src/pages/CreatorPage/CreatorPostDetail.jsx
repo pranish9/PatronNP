@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Heart, MessageCircle, Share as ShareIcon, MoreHorizontal, Lock, Music, Pin, ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Heart, MessageCircle, Share as ShareIcon, MoreHorizontal, Flag, Lock, Music, Pin, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import DOMPurify from "dompurify";
 import toast from "react-hot-toast";
 
@@ -11,6 +11,7 @@ import userService from "../../services/userService";
 import ShareModal from "../../components/PublicCreatorLayout/ShareModal";
 import PollShareModal from "../../components/posts/PollShareModal";
 import { getAuthUser } from "../../utils/auth";
+import { reportContent } from "../../services/reportService";
 
 const formatDate = (iso) =>
   new Date(iso).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
@@ -79,6 +80,7 @@ const CreatorPostDetail = () => {
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [myPollVote, setMyPollVote] = useState(null);
   const [pollVoteCounts, setPollVoteCounts] = useState([]);
   const [pollTotalVotes, setPollTotalVotes] = useState(0);
@@ -159,6 +161,22 @@ const CreatorPostDetail = () => {
 
   const scrollToComments = () => {
     commentBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const handleReport = async () => {
+    setMenuOpen(false);
+    if (!loggedIn) {
+      navigate("/signin", { state: { from: `/${username}/posts/${postId}` } });
+      return;
+    }
+    const reason = window.prompt("Why are you reporting this post?");
+    if (reason === null) return;
+    try {
+      await reportContent("POST", Number(postId), reason.trim());
+      toast.success("Thanks — this post has been reported to our team.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data || "Failed to report post");
+    }
   };
 
   const handleAddComment = async () => {
@@ -265,9 +283,28 @@ const CreatorPostDetail = () => {
           <ShareIcon size={16} />
           Share
         </button>
-        <button className="w-9 h-9 flex items-center justify-center rounded-full border border-patron-gray-200 text-patron-gray-600 hover:bg-patron-gray-50">
-          <MoreHorizontal size={16} />
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-patron-gray-200 text-patron-gray-600 hover:bg-patron-gray-50"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+          {menuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 z-20 bg-patron-white border border-patron-gray-200 rounded-xl shadow-lg py-1 w-40">
+                <button
+                  onClick={handleReport}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-patron-gray-600 hover:bg-patron-gray-50"
+                >
+                  <Flag size={14} />
+                  Report post
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {post.locked ? (

@@ -5,6 +5,7 @@ import { Line } from 'react-chartjs-2'
 import Layout from '../components/creatorLayout/Layout'
 import Card from '../components/Card'
 import Button from '../components/Button'
+import PayoutPanel from '../components/creatorLayout/PayoutPanel'
 import Alert from '../components/Alert'
 import { useLanguage } from '../hooks/useLanguage'
 import useAuthStore from '../stores/authStore'
@@ -213,6 +214,8 @@ export const Dashboard = () => {
                 )}
               </div>
             </div>
+
+            <PayoutPanel />
 
             {/* Recent transactions */}
             {loadingTransactions ? (

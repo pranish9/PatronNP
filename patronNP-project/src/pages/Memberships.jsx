@@ -9,7 +9,9 @@ import LevelFormModal from "../components/membership/LevelFormModal";
 import PaymentMethodPicker from "../components/PublicCreatorLayout/PaymentMethodPicker";
 import membershipService from "../services/membershipService";
 import { getMyTransactions } from "../services/transactionService";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { initiateEsewaRefundPayout, redirectToEsewa } from "../services/esewaService";
+import { initiateKhaltiRefundPayout, redirectToKhalti } from "../services/khaltiService";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
@@ -22,6 +24,7 @@ const TABS = [
 
 const Memberships = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("members");
 
   // Members tab
@@ -157,9 +160,28 @@ const Memberships = () => {
     if (activeTab === "recovery") loadRecovery();
   }, [activeTab, loadRecovery]);
 
+  // Handle the redirect back from eSewa/Khalti after a refund-payout checkout.
+  useEffect(() => {
+    const outcome = searchParams.get("refund");
+    if (!outcome) return;
+    setActiveTab("recovery");
+    if (outcome === "success") {
+      toast.success("Refund marked as paid");
+      loadRecovery();
+    } else {
+      toast.error("Payout payment didn't go through. Try again or mark it as paid manually.");
+    }
+    searchParams.delete("refund");
+    searchParams.delete("txn");
+    setSearchParams(searchParams, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const [refundReasons, setRefundReasons] = useState({});
+
   const handleResolveRefund = async (item, approve) => {
     try {
-      await membershipService.resolveRefund(item.subscriptionId, approve);
+      await membershipService.resolveRefund(item.subscriptionId, approve, refundReasons[item.subscriptionId]?.trim() || null);
       toast.success(approve ? "Refund marked as approved" : "Refund denied");
       loadRecovery();
     } catch {
@@ -171,24 +193,25 @@ const Memberships = () => {
   const [refundPayMethod, setRefundPayMethod] = useState("ESEWA");
   const [refundPayReference, setRefundPayReference] = useState("");
   const [confirmingPayment, setConfirmingPayment] = useState(false);
+  const [payoutBuyerEmail, setPayoutBuyerEmail] = useState("");
+  const [payoutBuyerPhone, setPayoutBuyerPhone] = useState("");
+  const [startingGatewayPayout, setStartingGatewayPayout] = useState(false);
 
   const openConfirmPaymentModal = (item) => {
     setPayingRefundFor(item);
     setRefundPayMethod(item.refundMethod === "KHALTI" ? "KHALTI" : "ESEWA");
     setRefundPayReference("");
+    setPayoutBuyerEmail("");
+    setPayoutBuyerPhone("");
   };
 
   const handleConfirmRefundPayment = async () => {
     if (!payingRefundFor) return;
-    if (!refundPayReference.trim()) {
-      toast.error("Enter the transaction reference for this payout");
-      return;
-    }
     setConfirmingPayment(true);
     try {
       await membershipService.confirmRefundPayment(
         payingRefundFor.subscriptionId,
-        refundPayReference.trim(),
+        refundPayReference.trim() || null,
         refundPayMethod
       );
       toast.success(`Refund marked as paid via ${refundPayMethod === "KHALTI" ? "Khalti" : "eSewa"}`);
@@ -198,6 +221,39 @@ const Memberships = () => {
       toast.error(err.response?.data?.message || "Failed to confirm refund payment");
     } finally {
       setConfirmingPayment(false);
+    }
+  };
+
+  // Sends the creator through a real eSewa/Khalti checkout for the refund amount so the
+  // transaction reference gets captured automatically instead of typed in by hand. The
+  // gateway has no payout API, so this only proves the creator paid — they still send the
+  // member the money separately.
+  const handleGatewayPayout = async () => {
+    if (!payingRefundFor) return;
+    if (!payoutBuyerEmail.trim() || !payoutBuyerPhone.trim()) {
+      toast.error("Enter your email and phone to continue to the payment gateway");
+      return;
+    }
+    setStartingGatewayPayout(true);
+    try {
+      if (refundPayMethod === "KHALTI") {
+        const data = await initiateKhaltiRefundPayout({
+          subscriptionId: payingRefundFor.subscriptionId,
+          buyerEmail: payoutBuyerEmail.trim(),
+          buyerPhone: payoutBuyerPhone.trim(),
+        });
+        redirectToKhalti(data.paymentUrl);
+      } else {
+        const data = await initiateEsewaRefundPayout({
+          subscriptionId: payingRefundFor.subscriptionId,
+          buyerEmail: payoutBuyerEmail.trim(),
+          buyerPhone: payoutBuyerPhone.trim(),
+        });
+        redirectToEsewa(data);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to start the payout checkout");
+      setStartingGatewayPayout(false);
     }
   };
 
@@ -460,6 +516,9 @@ const Memberships = () => {
                             {item.levelName} · Rs {item.amount?.toLocaleString()} ·{" "}
                             {item.cancelledAt && new Date(item.cancelledAt).toLocaleDateString("en-NP", { month: "short", day: "numeric" })}
                           </p>
+                          {item.memberEmail && (
+                            <p className="text-xs text-patron-gray-500">{item.memberEmail}</p>
+                          )}
                           {item.cancelReason && (
                             <p className="text-xs text-patron-gray-500 mt-1 italic">"{item.cancelReason}"</p>
                           )}
@@ -500,19 +559,29 @@ const Memberships = () => {
                         </p>
                       )}
                       {item.refundStatus === "REQUESTED" && (
-                        <div className="flex gap-2 mt-3">
-                          <button
-                            onClick={() => handleResolveRefund(item, true)}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-full bg-patron-green-600 text-white hover:bg-patron-green-700"
-                          >
-                            Approve refund
-                          </button>
-                          <button
-                            onClick={() => handleResolveRefund(item, false)}
-                            className="px-3 py-1.5 text-xs font-semibold rounded-full border border-patron-gray-200 text-patron-gray-700 hover:bg-patron-gray-50"
-                          >
-                            Deny
-                          </button>
+                        <div className="mt-3 space-y-2">
+                          <input
+                            value={refundReasons[item.subscriptionId] || ""}
+                            onChange={(e) =>
+                              setRefundReasons((prev) => ({ ...prev, [item.subscriptionId]: e.target.value }))
+                            }
+                            placeholder="Message to the member (optional) — sent with your decision"
+                            className="w-full px-3 py-2 text-xs bg-patron-gray-100 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleResolveRefund(item, true)}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-full bg-patron-green-600 text-white hover:bg-patron-green-700"
+                            >
+                              Approve refund
+                            </button>
+                            <button
+                              onClick={() => handleResolveRefund(item, false)}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-full border border-patron-gray-200 text-patron-gray-700 hover:bg-patron-gray-50"
+                            >
+                              Deny
+                            </button>
+                          </div>
                         </div>
                       )}
                       {item.refundStatus === "APPROVED" && (
@@ -585,28 +654,59 @@ const Memberships = () => {
             </div>
 
             <p className="text-sm text-patron-gray-500">
-              Confirm you sent Rs {payingRefundFor.refundAmount?.toLocaleString()} to{" "}
+              Send Rs {payingRefundFor.refundAmount?.toLocaleString()} to{" "}
               {payingRefundFor.memberDisplayName}
-              {payingRefundFor.refundPhone && ` (${payingRefundFor.refundPhone})`}.
+              {payingRefundFor.refundPhone && ` (${payingRefundFor.refundPhone})`}
+              {payingRefundFor.memberEmail && ` · ${payingRefundFor.memberEmail}`}.
             </p>
 
             <div>
               <p className="text-xs font-medium text-patron-gray-500 mb-2 uppercase tracking-wider">
-                Sent via
+                Payment preference
               </p>
               <PaymentMethodPicker value={refundPayMethod} onChange={setRefundPayMethod} />
             </div>
 
+            <div className="border border-patron-gray-200 rounded-xl p-3 space-y-2">
+              <p className="text-xs font-medium text-patron-gray-500">
+                Pay via {refundPayMethod === "KHALTI" ? "Khalti" : "eSewa"} checkout
+              </p>
+              <input
+                value={payoutBuyerEmail}
+                onChange={(e) => setPayoutBuyerEmail(e.target.value)}
+                placeholder="Your email"
+                className="w-full px-3 py-2 text-sm bg-patron-gray-100 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+              />
+              <input
+                value={payoutBuyerPhone}
+                onChange={(e) => setPayoutBuyerPhone(e.target.value)}
+                placeholder="Your phone"
+                className="w-full px-3 py-2 text-sm bg-patron-gray-100 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+              />
+              <button
+                onClick={handleGatewayPayout}
+                disabled={startingGatewayPayout}
+                className="w-full px-3 py-2 text-sm font-medium rounded-xl bg-patron-black text-white hover:bg-patron-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {startingGatewayPayout ? "Redirecting…" : `Pay via ${refundPayMethod === "KHALTI" ? "Khalti" : "eSewa"}`}
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-patron-gray-400">
+              <div className="flex-1 h-px bg-patron-gray-200" />
+              or mark it paid manually
+              <div className="flex-1 h-px bg-patron-gray-200" />
+            </div>
+
             <div>
               <label className="text-xs font-medium text-patron-gray-500">
-                {refundPayMethod === "KHALTI" ? "Khalti" : "eSewa"} transaction reference
+                {refundPayMethod === "KHALTI" ? "Khalti" : "eSewa"} transaction reference (optional)
               </label>
               <input
-                autoFocus
                 value={refundPayReference}
                 onChange={(e) => setRefundPayReference(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleConfirmRefundPayment()}
-                placeholder="e.g. 000AWEO"
+                placeholder="e.g. 000AWEO — leave blank if paid in cash/other"
                 className="mt-1 w-full px-3 py-2.5 text-sm bg-patron-gray-100 border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
               />
             </div>
@@ -620,7 +720,7 @@ const Memberships = () => {
               </button>
               <button
                 onClick={handleConfirmRefundPayment}
-                disabled={!refundPayReference.trim() || confirmingPayment}
+                disabled={confirmingPayment}
                 className="flex-1 px-3 py-2 text-sm font-medium rounded-xl bg-patron-green-600 text-white hover:bg-patron-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Mark as paid

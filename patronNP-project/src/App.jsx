@@ -1,8 +1,9 @@
-import { useEffect, Suspense, lazy } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState, Suspense, lazy } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import useThemeStore from "./stores/themeStore";
 import { scheduleAutoLogout, isTokenExpired, logout } from "./utils/authTimer";
+import { getPublicSettings } from "./services/platformService";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -62,6 +63,19 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const MaintenancePage = () => (
+  <div className="min-h-screen flex items-center justify-center bg-patron-gray-100 px-4">
+    <div className="text-center max-w-md">
+      <h1 className="text-2xl font-bold text-patron-black mb-2">We'll be right back</h1>
+      <p className="text-patron-gray-500">PatronNP is temporarily down for maintenance. Please check back shortly.</p>
+    </div>
+  </div>
+);
+
+const AnnouncementBanner = ({ message }) => (
+  <div className="bg-patron-black text-white text-sm text-center py-2 px-4">{message}</div>
+);
+
 const creatorNestedRoutes = (
   <>
     <Route index element={<CreatorProfile />} />
@@ -80,6 +94,14 @@ const creatorNestedRoutes = (
 
 const App = () => {
   const { isDark } = useThemeStore();
+  const location = useLocation();
+  const [platformSettings, setPlatformSettings] = useState(null);
+
+  useEffect(() => {
+    getPublicSettings()
+      .then(setPlatformSettings)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (isDark) {
@@ -108,7 +130,19 @@ const App = () => {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // Admin (and signin, so an admin can still log in) stay reachable during maintenance —
+  // everyone else sees the maintenance page instead of the app.
+  const isAdminOrAuthRoute = location.pathname.startsWith("/admin") || location.pathname === "/signin";
+
+  if (platformSettings?.maintenanceMode && !isAdminOrAuthRoute) {
+    return <MaintenancePage />;
+  }
+
   return (
+    <>
+    {platformSettings?.announcementBanner && !location.pathname.startsWith("/admin") && (
+      <AnnouncementBanner message={platformSettings.announcementBanner} />
+    )}
     <Suspense fallback={<RouteFallback />}>
     <Routes>
       {/* PUBLIC ROUTES — must come before /:username */}
@@ -257,6 +291,7 @@ const App = () => {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
+    </>
   );
 };
 

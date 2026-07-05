@@ -49,6 +49,16 @@ export const initiateKhaltiMembership = async ({ creatorUsername, levelId, billi
   return data;
 };
 
+export const initiateKhaltiRefundPayout = async ({ subscriptionId, buyerEmail, buyerPhone }) => {
+  const { data } = await apiClient.post("/payment/khalti/refund/initiate", {
+    subscriptionId,
+    buyerEmail,
+    buyerPhone,
+    frontendOrigin: window.location.origin,
+  });
+  return data;
+};
+
 export const redirectToKhalti = (paymentUrl) => {
   window.location.href = paymentUrl;
 };

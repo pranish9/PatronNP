@@ -45,8 +45,8 @@ const membershipService = {
 
   getRecovery: () => apiClient.get('/creator/membership/recovery'),
 
-  resolveRefund: (subscriptionId, approve) =>
-    apiClient.post(`/creator/membership/recovery/${subscriptionId}/resolve`, { approve }),
+  resolveRefund: (subscriptionId, approve, reason) =>
+    apiClient.post(`/creator/membership/recovery/${subscriptionId}/resolve`, { approve, reason }),
 
   confirmRefundPayment: (subscriptionId, referenceId, method) =>
     apiClient.post(`/creator/membership/recovery/${subscriptionId}/confirm-payment`, { referenceId, method }),
