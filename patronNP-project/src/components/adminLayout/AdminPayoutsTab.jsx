@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Download } from "lucide-react";
 import toast from "react-hot-toast";
 
 import adminService from "../../services/adminService";
@@ -75,23 +75,33 @@ const AdminPayoutsTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-patron-gray-200/60 rounded-full p-1 w-fit">
-        {STATUS_FILTERS.map((f) => (
-          <button
-            key={f.id}
-            onClick={() => {
-              setStatusFilter(f.id);
-              setPage(0);
-            }}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              statusFilter === f.id
-                ? "bg-patron-white text-patron-black shadow-sm"
-                : "text-patron-gray-500 hover:text-patron-gray-700"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex gap-1 bg-patron-gray-200/60 rounded-full p-1 w-fit">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => {
+                setStatusFilter(f.id);
+                setPage(0);
+              }}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                statusFilter === f.id
+                  ? "bg-patron-white text-patron-black shadow-sm"
+                  : "text-patron-gray-500 hover:text-patron-gray-700"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => adminService.exportPayouts(statusFilter)}
+          className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl border border-patron-gray-200 text-patron-gray-600 hover:bg-patron-gray-50"
+        >
+          <Download size={15} />
+          Export CSV
+        </button>
       </div>
 
       <div className="bg-patron-white rounded-2xl shadow-sm border border-patron-gray-200 overflow-hidden">

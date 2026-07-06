@@ -15,6 +15,8 @@ const downloadCsv = async (path, params, filename) => {
 const adminService = {
   getOverview: () => apiClient.get("/admin/overview"),
 
+  getNeedsAttention: () => apiClient.get("/admin/needs-attention"),
+
   getCommissionStats: () => apiClient.get("/admin/stats/commission"),
 
   getTransactions: (category, page = 0, size = 20) =>

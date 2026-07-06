@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Crown, Check, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Crown, Check, ArrowLeft, ShieldCheck, Flag } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "../../components/Button";
@@ -10,6 +10,7 @@ import UserNotFound from "./UserNotFound";
 import membershipService from "../../services/membershipService";
 import { initiateEsewaMembership, redirectToEsewa } from "../../services/esewaService";
 import { initiateKhaltiMembership, redirectToKhalti } from "../../services/khaltiService";
+import { reportContent } from "../../services/reportService";
 
 const CreatorMembership = () => {
   const navigate = useNavigate();
@@ -100,6 +101,21 @@ const CreatorMembership = () => {
     setBillingCycle(t?.yearlyPrice ? "MONTHLY" : "MONTHLY");
     setSelectedTier(tierId);
     setStep("checkout");
+  };
+
+  const handleReportLevel = async (tierId) => {
+    if (!loggedIn) {
+      navigate("/signin", { state: { from: `/${username}/membership` } });
+      return;
+    }
+    const reason = window.prompt("Why are you reporting this membership level?");
+    if (reason === null) return;
+    try {
+      await reportContent("MEMBERSHIP_LEVEL", tierId, reason.trim());
+      toast.success("Thanks — this has been reported to our team.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data || "Failed to submit report");
+    }
   };
 
   const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -427,8 +443,15 @@ const CreatorMembership = () => {
           {tiers.map((t) => (
             <div
               key={t.id}
-              className="bg-patron-white rounded-2xl border border-patron-gray-200/80 shadow-sm p-6 flex flex-col hover:border-patron-green-300 hover:shadow-md transition-all"
+              className="group relative bg-patron-white rounded-2xl border border-patron-gray-200/80 shadow-sm p-6 flex flex-col hover:border-patron-green-300 hover:shadow-md transition-all"
             >
+              <button
+                onClick={() => handleReportLevel(t.id)}
+                title="Report this membership level"
+                className="absolute top-3 right-3 p-1.5 rounded-lg text-patron-gray-300 opacity-0 group-hover:opacity-100 hover:text-patron-gray-500 transition-opacity"
+              >
+                <Flag size={13} />
+              </button>
               {t.coverImageUrl && (
                 <img src={t.coverImageUrl} alt="" className="w-full h-28 object-cover rounded-xl mb-3" />
               )}

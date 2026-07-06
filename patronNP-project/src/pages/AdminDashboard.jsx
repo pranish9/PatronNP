@@ -16,6 +16,10 @@ import {
   Undo2,
   ShieldAlert,
   Settings,
+  ScrollText,
+  Headset,
+  Download,
+  MessageSquareWarning,
 } from "lucide-react";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
@@ -27,6 +31,8 @@ import AdminPayoutsTab from "../components/adminLayout/AdminPayoutsTab";
 import AdminRefundsTab from "../components/adminLayout/AdminRefundsTab";
 import AdminReportsTab from "../components/adminLayout/AdminReportsTab";
 import AdminSettingsTab from "../components/adminLayout/AdminSettingsTab";
+import AdminAuditLogTab from "../components/adminLayout/AdminAuditLogTab";
+import AdminSupportTab from "../components/adminLayout/AdminSupportTab";
 import adminService from "../services/adminService";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler);
@@ -40,6 +46,8 @@ const TABS = [
   { id: "refunds", label: "Refunds", icon: Undo2 },
   { id: "reports", label: "Reports", icon: ShieldAlert },
   { id: "transactions", label: "Transactions", icon: Receipt },
+  { id: "support", label: "Support", icon: Headset },
+  { id: "audit-log", label: "Audit Log", icon: ScrollText },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -70,19 +78,22 @@ const AdminDashboard = () => {
   const [overview, setOverview] = useState(null);
   const [stats, setStats] = useState(null);
   const [rates, setRates] = useState(null);
+  const [attention, setAttention] = useState(null);
   const [loadingOverview, setLoadingOverview] = useState(true);
 
   const loadOverview = useCallback(async () => {
     setLoadingOverview(true);
     try {
-      const [overviewRes, statsRes, settingsRes] = await Promise.all([
+      const [overviewRes, statsRes, settingsRes, attentionRes] = await Promise.all([
         adminService.getOverview(),
         adminService.getCommissionStats(),
         adminService.getSettings(),
+        adminService.getNeedsAttention(),
       ]);
       setOverview(overviewRes.data);
       setStats(statsRes.data);
       setRates(settingsRes.data);
+      setAttention(attentionRes.data);
     } catch {
       toast.error("Failed to load commission stats");
     } finally {
@@ -173,6 +184,43 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="space-y-6">
+              {/* Needs attention */}
+              {attention && (
+                <div className="bg-patron-white rounded-2xl shadow-sm border border-patron-gray-200 p-5 sm:p-6">
+                  <h2 className="font-bold text-patron-black mb-4">Needs attention</h2>
+                  {attention.pendingPayouts + attention.pendingRefunds + attention.pendingReports + attention.openTickets === 0 ? (
+                    <p className="text-sm text-patron-gray-400">All caught up — nothing pending right now.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <AttentionCard
+                        icon={Banknote}
+                        label="Payouts"
+                        count={attention.pendingPayouts}
+                        onClick={() => setActiveTab("payouts")}
+                      />
+                      <AttentionCard
+                        icon={Undo2}
+                        label="Refunds"
+                        count={attention.pendingRefunds}
+                        onClick={() => setActiveTab("refunds")}
+                      />
+                      <AttentionCard
+                        icon={ShieldAlert}
+                        label="Reports"
+                        count={attention.pendingReports}
+                        onClick={() => setActiveTab("reports")}
+                      />
+                      <AttentionCard
+                        icon={MessageSquareWarning}
+                        label="Tickets"
+                        count={attention.openTickets}
+                        onClick={() => setActiveTab("support")}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Revenue cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard icon={Wallet} label="Total platform revenue" value={fmt(stats.totalPlatformRevenue)} accent="green" />
@@ -377,6 +425,7 @@ const AdminDashboard = () => {
 
         {activeTab === "transactions" && (
           <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex gap-1 bg-patron-gray-200/60 rounded-full p-1 w-fit">
               {CATEGORY_FILTERS.map((f) => (
                 <button
@@ -394,6 +443,15 @@ const AdminDashboard = () => {
                   {f.label}
                 </button>
               ))}
+            </div>
+
+            <button
+              onClick={() => adminService.exportTransactions(categoryFilter)}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-xl border border-patron-gray-200 text-patron-gray-600 hover:bg-patron-gray-50"
+            >
+              <Download size={15} />
+              Export CSV
+            </button>
             </div>
 
             <div className="bg-patron-white rounded-2xl shadow-sm border border-patron-gray-200 overflow-hidden">
@@ -461,6 +519,10 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {activeTab === "support" && <AdminSupportTab />}
+
+        {activeTab === "audit-log" && <AdminAuditLogTab />}
+
         {activeTab === "settings" && <AdminSettingsTab />}
       </div>
     </AdminLayout>
@@ -479,6 +541,23 @@ const StatCard = ({ icon: Icon, label, value, accent }) => (
     <p className="text-xl font-bold text-patron-black">{value}</p>
     <p className="text-xs text-patron-gray-500 mt-1">{label}</p>
   </div>
+);
+
+const AttentionCard = ({ icon: Icon, label, count, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`text-left rounded-xl p-3.5 border transition-colors ${
+      count > 0
+        ? "border-patron-orange-200 bg-patron-orange-50 hover:bg-patron-orange-100"
+        : "border-patron-gray-200 bg-patron-gray-100 hover:bg-patron-gray-200/60"
+    }`}
+  >
+    <div className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${count > 0 ? "text-patron-orange-700" : "text-patron-gray-500"}`}>
+      <Icon size={14} />
+      {label}
+    </div>
+    <p className={`text-2xl font-bold ${count > 0 ? "text-patron-orange-800" : "text-patron-gray-400"}`}>{count}</p>
+  </button>
 );
 
 const DayRangePicker = ({ value, onChange }) => (

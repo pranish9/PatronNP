@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Share2, ShoppingCart, Users, CheckCircle } from "lucide-react";
+import { ArrowLeft, Share2, ShoppingCart, Users, CheckCircle, Flag } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "../../components/Button";
@@ -8,6 +8,7 @@ import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "./UserNotFound";
 import productService, { openProductContent } from "../../services/productService";
 import ratingService from "../../services/ratingService";
+import { reportContent } from "../../services/reportService";
 import useCartStore from "../../stores/cartStore";
 import StarRating from "../../components/shop/StarRating";
 
@@ -58,6 +59,17 @@ const CreatorShopItem = () => {
     } else {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied!");
+    }
+  };
+
+  const handleReport = async () => {
+    const reason = window.prompt("Why are you reporting this item?");
+    if (reason === null) return;
+    try {
+      await reportContent("PRODUCT", item.id, reason.trim());
+      toast.success("Thanks — this item has been reported to our team.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data || "Failed to submit report");
     }
   };
 
@@ -117,6 +129,13 @@ const CreatorShopItem = () => {
         >
           <Share2 size={14} />
           <span className="hidden sm:inline">Share</span>
+        </button>
+        <button
+          onClick={handleReport}
+          title="Report item"
+          className="flex items-center justify-center border border-patron-gray-200 w-8 h-8 rounded-full hover:bg-patron-gray-50 text-patron-gray-500"
+        >
+          <Flag size={14} />
         </button>
       </div>
 

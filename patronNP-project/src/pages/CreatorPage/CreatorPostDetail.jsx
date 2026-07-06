@@ -163,19 +163,19 @@ const CreatorPostDetail = () => {
     commentBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const handleReport = async () => {
+  const handleReport = async (contentType, contentId, promptText, successText) => {
     setMenuOpen(false);
     if (!loggedIn) {
       navigate("/signin", { state: { from: `/${username}/posts/${postId}` } });
       return;
     }
-    const reason = window.prompt("Why are you reporting this post?");
+    const reason = window.prompt(promptText);
     if (reason === null) return;
     try {
-      await reportContent("POST", Number(postId), reason.trim());
-      toast.success("Thanks — this post has been reported to our team.");
+      await reportContent(contentType, Number(contentId), reason.trim());
+      toast.success(successText);
     } catch (err) {
-      toast.error(err.response?.data?.message || err.response?.data || "Failed to report post");
+      toast.error(err.response?.data?.message || err.response?.data || "Failed to submit report");
     }
   };
 
@@ -295,7 +295,9 @@ const CreatorPostDetail = () => {
               <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
               <div className="absolute right-0 top-full mt-1 z-20 bg-patron-white border border-patron-gray-200 rounded-xl shadow-lg py-1 w-40">
                 <button
-                  onClick={handleReport}
+                  onClick={() =>
+                    handleReport("POST", postId, "Why are you reporting this post?", "Thanks — this post has been reported to our team.")
+                  }
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-patron-gray-600 hover:bg-patron-gray-50"
                 >
                   <Flag size={14} />
@@ -418,7 +420,7 @@ const CreatorPostDetail = () => {
         ) : (
           <div className="space-y-3 mb-4">
             {comments.map((c) => (
-              <div key={c.id} className="flex items-start gap-3">
+              <div key={c.id} className="group flex items-start gap-3">
                 <img
                   src={c.commenterProfilePictureUrl || avatarUrl(c.commenterDisplayName)}
                   alt=""
@@ -428,6 +430,15 @@ const CreatorPostDetail = () => {
                   <p className="text-xs font-semibold text-patron-black">{c.commenterDisplayName}</p>
                   <p className="text-sm text-patron-gray-700 mt-0.5">{c.text}</p>
                 </div>
+                <button
+                  onClick={() =>
+                    handleReport("COMMENT", c.id, "Why are you reporting this comment?", "Thanks — this comment has been reported to our team.")
+                  }
+                  title="Report comment"
+                  className="shrink-0 p-1 mt-1 rounded text-patron-gray-300 opacity-0 group-hover:opacity-100 hover:text-patron-gray-500 transition-opacity"
+                >
+                  <Flag size={13} />
+                </button>
               </div>
             ))}
           </div>
