@@ -4,13 +4,14 @@ import Layout from "../components/creatorLayout/Layout";
 import EditProfileTab from "../components/account/EditProfileTab";
 import FollowersTab from "../components/account/FollowersTab";
 import SupportTab from "../components/account/SupportTab";
+import PayoutMethodTab from "../components/account/PayoutMethodTab";
 
 // Payment/purchase history is only needed once someone actually clicks the
 // "Payments" tab, so it's split into its own chunk instead of loading on
 // every "My account" visit.
 const PaymentsTab = lazy(() => import("../components/account/PaymentsTab"));
 
-const TABS = ["Edit profile", "Payments", "Followers", "Support"];
+const TABS = ["Edit profile", "Payments", "Payout method", "Followers", "Support"];
 
 const AccountPage = () => {
   const [activeTab, setActiveTab] = useState("Edit profile");
@@ -49,6 +50,7 @@ const AccountPage = () => {
               <PaymentsTab />
             </Suspense>
           )}
+          {activeTab === "Payout method" && <PayoutMethodTab />}
           {activeTab === "Followers" && <FollowersTab />}
           {activeTab === "Support" && <SupportTab />}
         </div>

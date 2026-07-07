@@ -34,6 +34,12 @@ const AdminSettingsTab = () => {
   const [gatewayFeePercent, setGatewayFeePercent] = useState("");
   const [banner, setBanner] = useState("");
 
+  const [audience, setAudience] = useState("CREATORS");
+  const [emails, setEmails] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
+
   const load = () => {
     setLoading(true);
     adminService
@@ -89,6 +95,38 @@ const AdminSettingsTab = () => {
       toast.error(err.response?.data?.message || err.response?.data || "Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const sendBroadcast = async () => {
+    if (!subject.trim() || !message.trim()) {
+      toast.error("Subject and message are required");
+      return;
+    }
+    const emailList = emails
+      .split(",")
+      .map((e) => e.trim())
+      .filter(Boolean);
+    if (audience === "EMAILS" && emailList.length === 0) {
+      toast.error("Provide at least one email address");
+      return;
+    }
+    setBroadcasting(true);
+    try {
+      const res = await adminService.broadcast({
+        audience,
+        emails: audience === "EMAILS" ? emailList : undefined,
+        subject: subject.trim(),
+        message: message.trim(),
+      });
+      toast.success(`Sent to ${res.data.sent} recipient(s), ${res.data.failed} failed`);
+      setSubject("");
+      setMessage("");
+      setEmails("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data || "Failed to send broadcast");
+    } finally {
+      setBroadcasting(false);
     }
   };
 
@@ -185,6 +223,58 @@ const AdminSettingsTab = () => {
           label="Tips"
           description="Allow new tips/support payments"
         />
+      </div>
+
+      <div className="bg-patron-white rounded-2xl shadow-sm border border-patron-gray-200 p-5 sm:p-6">
+        <h2 className="font-bold text-patron-black mb-1">Broadcast message</h2>
+        <p className="text-xs text-patron-gray-500 mb-4">Sends an email to every active creator, or to a specific list of addresses.</p>
+
+        <div className="flex gap-2 mb-3">
+          {["CREATORS", "EMAILS"].map((a) => (
+            <button
+              key={a}
+              type="button"
+              onClick={() => setAudience(a)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-full border ${
+                audience === a
+                  ? "bg-patron-black text-white border-patron-black"
+                  : "border-patron-gray-300 text-patron-gray-600"
+              }`}
+            >
+              {a === "CREATORS" ? "All creators" : "Specific emails"}
+            </button>
+          ))}
+        </div>
+
+        {audience === "EMAILS" && (
+          <input
+            value={emails}
+            onChange={(e) => setEmails(e.target.value)}
+            placeholder="comma-separated email addresses"
+            className="w-full mb-3 px-3 py-2 text-sm bg-patron-gray-100 rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+          />
+        )}
+
+        <input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Subject"
+          className="w-full mb-3 px-3 py-2 text-sm bg-patron-gray-100 rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30"
+        />
+        <textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={4}
+          placeholder="Message"
+          className="w-full mb-3 px-3 py-2 text-sm bg-patron-gray-100 rounded-xl border-none focus:outline-none focus:ring-2 focus:ring-patron-green-500/30 resize-none"
+        />
+        <button
+          onClick={sendBroadcast}
+          disabled={broadcasting}
+          className="px-4 py-2.5 text-sm font-semibold rounded-xl bg-patron-green-600 hover:bg-patron-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {broadcasting ? "Sending..." : "Send broadcast"}
+        </button>
       </div>
 
       <div className="bg-patron-white rounded-2xl shadow-sm border border-patron-gray-200 p-5 sm:p-6">

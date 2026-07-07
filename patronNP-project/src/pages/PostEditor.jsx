@@ -17,10 +17,12 @@ import {
   Loader2,
   Trash2,
   GripVertical,
+  Sparkles,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import postService from "../services/postService";
+import aiService from "../services/aiService";
 import PostSidebar from "../components/posts/PostSidebar";
 import FileDropzone from "../components/posts/FileDropzone";
 import PromptModal from "../components/posts/PromptModal";
@@ -69,6 +71,7 @@ const PostEditor = () => {
   const [imageSelection, setImageSelection] = useState(null);
   const [liveModalOpen, setLiveModalOpen] = useState(false);
   const [livePost, setLivePost] = useState(null);
+  const [improvingCaption, setImprovingCaption] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -281,6 +284,35 @@ const PostEditor = () => {
 
   const removePollOption = (index) =>
     setPollOptions((prev) => prev.filter((_, i) => i !== index));
+
+  const handleImproveCaption = async () => {
+    if (!caption.trim()) {
+      toast.error("Write something first");
+      return;
+    }
+    setImprovingCaption(true);
+    try {
+      const { data } = await aiService.improveText(caption);
+      setCaption(data.improvedText);
+      toast.success("Improved with AI");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.response?.data || "AI assist failed");
+    } finally {
+      setImprovingCaption(false);
+    }
+  };
+
+  const ImproveWithAiButton = () => (
+    <button
+      type="button"
+      onClick={handleImproveCaption}
+      disabled={improvingCaption}
+      className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-patron-gray-300 text-xs font-semibold text-patron-black hover:bg-patron-gray-50 disabled:opacity-60 shrink-0"
+    >
+      <Sparkles size={12} className={improvingCaption ? "animate-pulse" : ""} />
+      {improvingCaption ? "Improving..." : "Improve with AI"}
+    </button>
+  );
 
   const dragChoiceIndexRef = useRef(null);
   const reorderPollOptions = (toIndex) => {
@@ -506,12 +538,15 @@ const PostEditor = () => {
                     ))}
                   </div>
                 )}
-                <input
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Type something here (optional)"
-                  className="w-full text-sm text-patron-gray-700 placeholder-patron-gray-400 outline-none border-b border-patron-gray-100 py-2"
-                />
+                <div className="flex items-center gap-2 border-b border-patron-gray-100 py-2">
+                  <input
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Type something here (optional)"
+                    className="flex-1 text-sm text-patron-gray-700 placeholder-patron-gray-400 outline-none"
+                  />
+                  <ImproveWithAiButton />
+                </div>
               </div>
             )}
 
@@ -541,12 +576,15 @@ const PostEditor = () => {
                     hint="Upload audio or drag and drop."
                   />
                 )}
-                <input
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  placeholder="Type something here (optional)"
-                  className="w-full text-sm text-patron-gray-700 placeholder-patron-gray-400 outline-none border-b border-patron-gray-100 py-2"
-                />
+                <div className="flex items-center gap-2 border-b border-patron-gray-100 py-2">
+                  <input
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="Type something here (optional)"
+                    className="flex-1 text-sm text-patron-gray-700 placeholder-patron-gray-400 outline-none"
+                  />
+                  <ImproveWithAiButton />
+                </div>
               </div>
             )}
 
@@ -563,7 +601,10 @@ const PostEditor = () => {
                 </div>
 
                 <div>
-                  <label className="text-sm font-bold text-patron-black">Description</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-bold text-patron-black">Description</label>
+                    <ImproveWithAiButton />
+                  </div>
                   <textarea
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}

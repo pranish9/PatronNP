@@ -7,6 +7,7 @@ import Layout from "../components/creatorLayout/Layout";
 import ProductRow from "../components/shop/ProductRow";
 import ShopOrders from "../components/shop/ShopOrders";
 import ShopDiscounts from "../components/shop/ShopDiscounts";
+import { SkeletonRows } from "../components/Skeleton";
 import productService from "../services/productService";
 
 const TEMPLATES = [
@@ -175,7 +176,7 @@ const Shop = () => {
 
                 <div className="bg-patron-white rounded-2xl shadow-sm border border-patron-gray-200 divide-y divide-patron-gray-100 px-4">
                   {loading ? (
-                    <div className="py-8 text-center text-patron-gray-400 text-sm">Loading...</div>
+                    <SkeletonRows count={4} />
                   ) : filteredProducts.length === 0 ? (
                     <div className="py-8 text-center text-patron-gray-400 text-sm">
                       No {STATUS_TABS.find((t) => t.id === statusTab)?.label.toLowerCase()} products yet.

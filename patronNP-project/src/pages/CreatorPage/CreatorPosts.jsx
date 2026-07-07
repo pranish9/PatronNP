@@ -4,6 +4,7 @@ import { Search, Pin, Images, Music, BarChart2, Crown, Users } from "lucide-reac
 
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "./UserNotFound";
+import { SkeletonProfile } from "../../components/Skeleton";
 import postService from "../../services/postService";
 
 const FILTERS = [
@@ -90,11 +91,7 @@ const CreatorPosts = () => {
   }, [username, filter]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 border-2 border-patron-green-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <SkeletonProfile />;
   }
 
   if (notFound) return <UserNotFound username={username} />;

@@ -89,7 +89,19 @@
     "emailAlreadyRegistered": "This email is already registered",
     "verifyYourEmail": "Verify Your Email",
     "completeGoogleSignup": "Complete Google Sign-up",
-    "weWillUseGoogle": "We'll use your Google account to create your account with username"
+    "weWillUseGoogle": "We'll use your Google account to create your account with username",
+    "usePasswordInstead": "Use password instead",
+    "useOtpInstead": "Use OTP instead",
+    "newPassword": "New password",
+    "resetYourPassword": "Reset your password",
+    "forgotPasswordEmailStep": "We'll send a one-time code to your email",
+    "forgotPasswordResetStep": "Enter the code and choose a new password",
+    "sendOtpButton": "Send OTP",
+    "resettingPassword": "Resetting...",
+    "resetPasswordButton": "Reset password",
+    "backToSignIn": "Back to sign in",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "enterValidOtp": "Please enter a valid 6 digit OTP"
   },
   "onboarding": {
     "welcome": "Welcome to PatronNP",

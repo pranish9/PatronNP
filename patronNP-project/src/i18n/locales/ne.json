@@ -89,7 +89,19 @@
     "emailAlreadyRegistered": "यो ईमेल पहिले नै दर्ता गरिएको छ",
     "verifyYourEmail": "आफ्नो ईमेल प्रमाणित गर्नुहोस्",
     "completeGoogleSignup": "Google दर्ता पूरा गर्नुहोस्",
-    "weWillUseGoogle": "हामी तपाईंको Google खाता प्रयोग गरेर प्रयोगकर्तानामको साथ खाता बनाउनेछौं"
+    "weWillUseGoogle": "हामी तपाईंको Google खाता प्रयोग गरेर प्रयोगकर्तानामको साथ खाता बनाउनेछौं",
+    "usePasswordInstead": "बरु पासवर्ड प्रयोग गर्नुहोस्",
+    "useOtpInstead": "बरु OTP प्रयोग गर्नुहोस्",
+    "newPassword": "नयाँ पासवर्ड",
+    "resetYourPassword": "आफ्नो पासवर्ड रिसेट गर्नुहोस्",
+    "forgotPasswordEmailStep": "हामी तपाईंको ईमेलमा एक पटकको कोड पठाउनेछौं",
+    "forgotPasswordResetStep": "कोड प्रविष्ट गर्नुहोस् र नयाँ पासवर्ड छान्नुहोस्",
+    "sendOtpButton": "OTP पठाउनुहोस्",
+    "resettingPassword": "रिसेट गर्दै...",
+    "resetPasswordButton": "पासवर्ड रिसेट गर्नुहोस्",
+    "backToSignIn": "साइन इनमा फर्कनुहोस्",
+    "passwordMinLength": "पासवर्ड कम्तिमा ६ अक्षरको हुनुपर्छ",
+    "enterValidOtp": "कृपया मान्य ६ अंकको OTP प्रविष्ट गर्नुहोस्"
   },
   "onboarding": {
     "welcome": "PatronNP मा स्वागत छ",

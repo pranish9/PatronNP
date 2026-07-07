@@ -8,6 +8,7 @@ import { getPublicSettings } from "./services/platformService";
 // Public Pages
 import Home from "./pages/Home";
 import SignIn from "./pages/SignIn";
+import ForgotPassword from "./pages/ForgotPassword";
 import SignUp from "./pages/SignUp";
 import VerifyOTPPage from "./pages/VerifyOTPPage";
 import Explore from "./pages/Explore";
@@ -132,7 +133,10 @@ const App = () => {
 
   // Admin (and signin, so an admin can still log in) stay reachable during maintenance —
   // everyone else sees the maintenance page instead of the app.
-  const isAdminOrAuthRoute = location.pathname.startsWith("/admin") || location.pathname === "/signin";
+  const isAdminOrAuthRoute =
+    location.pathname.startsWith("/admin") ||
+    location.pathname === "/signin" ||
+    location.pathname === "/forgot-password";
 
   if (platformSettings?.maintenanceMode && !isAdminOrAuthRoute) {
     return <MaintenancePage />;
@@ -148,6 +152,7 @@ const App = () => {
       {/* PUBLIC ROUTES — must come before /:username */}
       <Route path="/" element={<Home />} />
       <Route path="/signin" element={<SignIn />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/verify-otp" element={<VerifyOTPPage />} />
       <Route path="/explore" element={<Explore />} />

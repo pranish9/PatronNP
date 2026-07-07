@@ -7,6 +7,7 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import PayoutPanel from '../components/creatorLayout/PayoutPanel'
 import Alert from '../components/Alert'
+import { SkeletonRows } from '../components/Skeleton'
 import { useLanguage } from '../hooks/useLanguage'
 import useAuthStore from '../stores/authStore'
 import { useNavigate } from 'react-router-dom'
@@ -219,7 +220,9 @@ export const Dashboard = () => {
 
             {/* Recent transactions */}
             {loadingTransactions ? (
-              <div className="py-12 text-center text-gray-400 text-sm">{t('dashboard.loadingTransactions')}</div>
+              <div className="border border-gray-100 rounded-2xl bg-white px-5">
+                <SkeletonRows count={4} />
+              </div>
             ) : transactions.length === 0 ? (
               <div className="border border-gray-100 rounded-2xl py-12 text-center bg-white shadow-xs max-w-xl mx-auto">
                 <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 border border-gray-100">

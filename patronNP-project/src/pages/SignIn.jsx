@@ -20,6 +20,7 @@ const SignIn = () => {
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -116,7 +117,7 @@ const googleLogin = useGoogleLogin({
   },
 
   onError: () => {
-    setError("Google authentication failed");
+    setError(t('auth.failedGoogleAuth'));
     toast.error("Google authentication failed");
   },
 });
@@ -127,7 +128,7 @@ const googleLogin = useGoogleLogin({
     setError("");
 
     if (!email) {
-      return setError("Please enter your email");
+      return setError(t('auth.emailRequired'));
     }
 
     try {
@@ -160,7 +161,7 @@ const googleLogin = useGoogleLogin({
     setError("");
 
     if (otp.length !== 6) {
-      return setError("Please enter a valid 6 digit OTP");
+      return setError(t('auth.enterValid6DigitOtp'));
     }
 
     try {
@@ -217,6 +218,62 @@ const googleLogin = useGoogleLogin({
     }
   };
   
+  const handlePasswordLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!email) {
+      return setError(t('auth.emailRequired'));
+    }
+    if (!password) {
+      return setError(t('auth.passwordRequired'));
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post(`${API_HOST}/auth/login`, {
+        email,
+        password,
+      });
+
+      localStorage.setItem("accessToken", res.data.token);
+      scheduleAutoLogout();
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: res.data.id,
+          username: res.data.username,
+          email: res.data.email,
+          role: res.data.role,
+        })
+      );
+
+      localStorage.setItem("username", res.data.username);
+      localStorage.setItem(
+        "onboardingCompleted",
+        String(res.data.onboardingCompleted)
+      );
+
+      if (res.data.role === "ADMIN") {
+        navigate("/admin");
+      } else if (res.data.onboardingCompleted) {
+        navigate("/dashboard");
+      } else {
+        navigate("/onboarding");
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data ||
+          t('auth.invalidCredentials')
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const progress =
     ((OTP_TIME - timer) / OTP_TIME) * 100;
 
@@ -315,6 +372,64 @@ const googleLogin = useGoogleLogin({
                 {loading
                   ? t('auth.sendingOtp')
                   : t('auth.continueWithEmail')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("password");
+                  setError("");
+                }}
+                className="w-full text-sm text-gray-500 hover:underline"
+              >
+                {t('auth.usePasswordInstead')}
+              </button>
+            </form>
+          )}
+
+          {step === "password" && (
+            <form onSubmit={handlePasswordLogin} className="space-y-4">
+              <input
+                type="email"
+                placeholder={t('auth.enterEmail')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
+              />
+
+              <input
+                type="password"
+                placeholder={t('auth.password')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-4 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-400 outline-none"
+              />
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-4 rounded-xl transition"
+              >
+                {loading ? t('auth.verifying') : t('auth.loginButton')}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/forgot-password")}
+                className="w-full text-sm text-gray-500 hover:underline"
+              >
+                {t('auth.forgotPassword')}?
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep("email");
+                  setError("");
+                }}
+                className="w-full text-sm text-gray-500 hover:underline"
+              >
+                {t('auth.useOtpInstead')}
               </button>
             </form>
           )}
