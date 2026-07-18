@@ -31,6 +31,7 @@ import CreatorMembership from "./pages/CreatorPage/CreatorMembership";
 import TipPaymentSuccess from "./pages/CreatorPage/TipPaymentSuccess";
 import TipPaymentFailure from "./pages/CreatorPage/TipPaymentFailure";
 import Integrations from "./pages/Integrations";
+import Settings from "./pages/Settings";
 import StreamAlertOverlay from "./pages/StreamAlertOverlay";
 
 // Layouts
@@ -279,6 +280,14 @@ const App = () => {
         element={
           <ProtectedRoute>
             <AccountPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         }
       />

@@ -18,10 +18,14 @@ import Button from "../../components/Button";
 import PaymentMethodPicker from "../../components/PublicCreatorLayout/PaymentMethodPicker";
 import { useCreatorPage } from "../../context/CreatorPageContext";
 import UserNotFound from "../CreatorPage/UserNotFound";
-import { getCreatorPosts } from "../../data/creatorMockData";
+import postService from "../../services/postService";
 import { initiateEsewaTip, redirectToEsewa } from "../../services/esewaService";
 import { initiateKhaltiTip, redirectToKhalti } from "../../services/khaltiService";
 import { getRecentSupporters } from "../../services/supporterService";
+
+// Album posts carry images[]; a rich-text post only has inline <img> tags in its
+// HTML content, so pull the first one out to use as a thumbnail (mirrors CreatorPosts.jsx).
+const firstContentImage = (html) => html?.match(/<img[^>]+src="([^"]+)"/)?.[1] || null;
 
 const CreatorProfile = () => {
   const {
@@ -47,6 +51,7 @@ const CreatorProfile = () => {
   const [hasMoreSupporters, setHasMoreSupporters] = useState(false);
   const [loadingMoreSupporters, setLoadingMoreSupporters] = useState(false);
   const SUPPORTERS_PAGE_SIZE = 4;
+  const [recentPosts, setRecentPosts] = useState([]);
 
   useEffect(() => {
     if (!username) return;
@@ -57,6 +62,14 @@ const CreatorProfile = () => {
         setHasMoreSupporters(!data.last);
       })
       .catch(() => setSupporters([]));
+  }, [username]);
+
+  useEffect(() => {
+    if (!username) return;
+    postService
+      .getPublicPosts(username, "all")
+      .then(({ data }) => setRecentPosts((data || []).slice(0, 3)))
+      .catch(() => setRecentPosts([]));
   }, [username]);
 
   const handleLoadMoreSupporters = async () => {
@@ -95,8 +108,6 @@ const CreatorProfile = () => {
   const totalAmount = customAmount
     ? parseInt(customAmount, 10)
     : unitPrice * quantity;
-
-  const recentPosts = getCreatorPosts(username).slice(0, 3);
 
   const videoUrl = c.featuredVideoUrl || c.introVideoUrl;
   const getYoutubeEmbed = (url) => {
@@ -349,37 +360,46 @@ const CreatorProfile = () => {
                 View all
               </Link>
             </div>
-            <div className="space-y-3">
-              {recentPosts.map((post) => (
-                <Link
-                  key={post.id}
-                  to={`/${username}/posts/${post.id}`}
-                  className="flex gap-3 p-3 rounded-xl hover:bg-patron-green-50 border border-transparent hover:border-patron-green-100 transition-colors group"
-                >
-                  <div className="w-10 h-10 rounded-lg bg-patron-green-100 text-patron-green-700 flex items-center justify-center shrink-0">
-                    {post.type === "audio" ? (
-                      <Headphones size={18} />
-                    ) : post.type === "photo" ? (
-                      <ImageIcon size={18} />
-                    ) : (
-                      <FileText size={18} />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-patron-black group-hover:text-patron-green-800 truncate">
-                      {post.title}
-                    </h3>
-                    <p className="text-xs text-patron-gray-500 mt-0.5">
-                      {new Date(post.date).toLocaleDateString("en-NP", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {recentPosts.length === 0 ? (
+              <p className="text-sm text-patron-gray-400 text-center py-6">No posts yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {recentPosts.map((post) => {
+                  const thumbnail = post.images?.[0] || firstContentImage(post.content);
+                  return (
+                  <Link
+                    key={post.id}
+                    to={`/${username}/posts/${post.id}`}
+                    className="flex gap-3 p-3 rounded-xl hover:bg-patron-green-50 border border-transparent hover:border-patron-green-100 transition-colors group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-patron-green-100 text-patron-green-700 flex items-center justify-center shrink-0 overflow-hidden">
+                      {thumbnail ? (
+                        <img src={thumbnail} alt="" className="w-full h-full object-cover" />
+                      ) : post.postType === "AUDIO" ? (
+                        <Headphones size={18} />
+                      ) : post.postType === "ALBUM" ? (
+                        <ImageIcon size={18} />
+                      ) : (
+                        <FileText size={18} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm text-patron-black group-hover:text-patron-green-800 truncate">
+                        {post.title || "Untitled"}
+                      </h3>
+                      <p className="text-xs text-patron-gray-500 mt-0.5">
+                        {new Date(post.createdAt).toLocaleDateString("en-NP", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </Link>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
 

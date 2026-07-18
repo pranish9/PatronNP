@@ -146,7 +146,7 @@ const Navbar = ({ username, onLogout }) => {
                 <Pencil size={14} />
                 Edit page
               </button>
-              <CreateMenu username={username} />
+              <CreateMenu />
               <Link
                 to="/dashboard"
                 className="hidden md:flex items-center gap-1 px-2.5 py-1.5 bg-patron-green-600 text-white text-xs sm:text-sm font-medium rounded-full hover:bg-patron-green-700"

@@ -383,7 +383,7 @@ export const Dashboard = () => {
               {t('dashboard.loggedInAs')} <span className="text-gray-700 font-semibold">{storedUser?.email || displayName}</span>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="p-2">
+              <Button variant="ghost" size="sm" className="p-2" onClick={() => navigate('/settings')}>
                 <Settings size={16} />
               </Button>
               <Button variant="secondary" size="sm" className="text-xs py-1.5 flex items-center gap-1.5" onClick={handleLogout}>
